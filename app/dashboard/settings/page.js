@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import imageCompression from 'browser-image-compression';
 import { Settings, Image as ImageIcon, Globe, Lock, ExternalLink, Mail, CheckCircle, AlertCircle, Camera, Loader2 } from 'lucide-react';
 
-export default function PhotographerSettings() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const syncStatus = searchParams.get('sync');
   const errorStatus = searchParams.get('error');
@@ -237,5 +237,13 @@ export default function PhotographerSettings() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function PhotographerSettings() {
+  return (
+    <Suspense fallback={<div className="container flex-center" style={{ minHeight: '100vh' }}>Loading Boutique Settings...</div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }
