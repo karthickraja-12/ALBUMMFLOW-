@@ -1,26 +1,202 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;700&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Editorial Palette - Cream & Charcoal */
+  --background: 30 20% 98%;
+  --foreground: 240 10% 10%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 10%;
+ 
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 10%;
+ 
+  --primary: 35 30% 25%; /* Deep Bronze */
+  --primary-foreground: 30 20% 98%;
+ 
+  --secondary: 0 0% 92%;
+  --secondary-foreground: 240 10% 10%;
+ 
+  --muted: 240 5% 60%;
+  --muted-foreground: 240 5% 35%;
+ 
+  --accent: 35 40% 90%;
+  --accent-foreground: 35 30% 20%;
+ 
+  --danger: 0 84% 60%;
+  --danger-foreground: 0 0% 98%;
+ 
+  --border: 240 5% 90%;
+  --input: 240 5% 90%;
+  --ring: 35 30% 25%;
+ 
+  --radius: 1.5rem;
+  
+  /* Signature Glass (Light Edition) */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-secondary: hsl(var(--secondary));
+  --color-muted: hsl(var(--muted));
+  --color-accent: hsl(var(--accent));
+  --color-border: hsl(var(--border));
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: hsl(var(--border) / 1);
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(35, 40%, 95%, 1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(0, 0%, 100%, 1) 0, transparent 50%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 }
 
-body {
-  background: var(--background);
+/* Luxury Utility Classes */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius);
+}
+
+.glass-pill {
+  background: var(--foreground);
+  color: var(--background);
+  padding: 0.75rem 2rem;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+}
+
+.glass-pill:hover {
+  background: transparent;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  border-color: var(--foreground);
+  transform: translateY(-2px);
+}
+
+.text-signature {
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, #666 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.btn-primary {
+  background: var(--foreground);
+  color: var(--background);
+  padding: 0.75rem 2rem;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  background: transparent;
+  color: var(--foreground);
+  border-color: var(--foreground);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--glass-border);
+  padding: 0.75rem 2rem;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  background: var(--accent);
+  border-color: var(--foreground);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Animations */
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-pop {
+  animation: popIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade {
+  animation: fadeIn 1.2s ease forwards;
+}
+
+.animate-cinematic {
+  animation: popIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Scrollbar for Luxury Feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
+.input-focus:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 4px hsla(var(--primary), 0.1);
 }
