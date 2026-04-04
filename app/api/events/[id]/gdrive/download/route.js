@@ -155,6 +155,8 @@ export async function POST(request, { params }) {
     let message = error.message;
     if (message.includes('unauthorized_client')) {
       message = "Google Authentication Failed (Unauthorized Client). This usually refers to incorrect Client ID or Secret in Vercel. Please double check your Environment Variables and Redeploy.";
+    } else if (message.includes('deleted_client')) {
+      message = "Critical Error: Your Google OAuth Client has been deleted. Please create a new Web Client in Google Cloud Console, update Vercel, and Reconnect.";
     }
     return NextResponse.json({ error: message }, { status: 500 });
   }
