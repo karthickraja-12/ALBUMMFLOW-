@@ -80,13 +80,14 @@ export async function POST(request, { params }) {
     // 3. Gather candidate files for matching
     let candidateFiles = [];
     if (originalsId) {
+      console.log(`Searching for finalists in Originals folder: ${originalsId}`);
       // Prioritize files in the Originals folder
       const folderFiles = await drive.files.list({
         q: `'${originalsId}' in parents and trashed=false`,
         fields: 'files(id, name, parents, webContentLink)',
         pageSize: 1000
       });
-      candidateFiles = folderFiles.data.files;
+      candidateFiles = folderFiles.data.files || [];
     }
 
     // If no files in folder (or folder missing), check the root as fallback for legacy photos
