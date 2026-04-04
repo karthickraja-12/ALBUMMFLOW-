@@ -163,15 +163,10 @@ export async function POST(request, { params }) {
     // 4. Mark Event as Finalized in DB
     await supabase.from('events').update({ is_finalized: true }).eq('id', eventId);
 
-    // 5. Cleanup: Delete the Originals folder if it exists
-    if (originalsId && matchedCount > 0) {
-      console.log(`Cleaning up Originals folder ${originalsId}...`);
-      await drive.files.delete({ fileId: originalsId });
-    }
-
+    // 5. Success
     return NextResponse.json({ 
       success: true, 
-      message: `Successfully moved ${matchedCount} photos to the Winners folder and cleaned up originals.`,
+      message: `Successfully archived ${matchedCount} selection(s) to the Winners folder.`,
       links: downloadLinks 
     });
 

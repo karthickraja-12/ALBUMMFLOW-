@@ -41,6 +41,17 @@ export default function EventDashboard({ params }) {
     }
   };
 
+  const handleRevokeSelection = async (photoId) => {
+    if (!confirm("Remove this photo from the selection list?")) return;
+    try {
+      const { error } = await supabase.from('selections').delete().eq('photo_id', photoId).eq('event_id', id);
+      if (error) throw error;
+      setSelections(prev => prev.filter(s => s.photo_id !== photoId));
+    } catch (err) {
+       alert("Failed to remove selection: " + err.message);
+    }
+  };
+
   const handleDownloadRaw = async () => {
     setDownloading(true);
     try {
@@ -310,6 +321,18 @@ export default function EventDashboard({ params }) {
                       <div className="glass" style={{ position: 'absolute', bottom: 16, left: 16, right: 16, color: 'black', padding: '0.75rem 1rem', borderRadius: '1.25rem', fontSize: '0.75rem', fontWeight: 900, textAlign: 'center', background: 'white', border: '1px solid rgba(0,0,0,0.05)', letterSpacing: '0.05em' }}>
                         {selectedBy.map(s => s.user_name.toUpperCase()).join(' • ')}
                       </div>
+                      
+                      {/* REVOKE BUTTON */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRevokeSelection(photo.id);
+                        }}
+                        style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.9)', color: 'hsl(var(--danger))', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1rem', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}
+                        title="Remove from Selection"
+                      >
+                        ×
+                      </button>
                     </div>
                   );
                 })}
