@@ -114,13 +114,20 @@ export async function POST(request, { params }) {
         if (matchedFile.webContentLink) downloadLinks.push(matchedFile.webContentLink);
 
         // Move to winners folder
-        const previousParents = matchedFile.parents?.join(',') || '';
-        await drive.files.update({
+        const previousParents = (matchedFile.parents || []).join(',');
+        
+        const updateParams = {
           fileId: matchedFile.id,
           addParents: winnersFolderId,
-          removeParents: previousParents,
           fields: 'id, parents'
-        });
+        };
+
+        // Only add removeParents if there are actually parents to remove
+        if (previousParents) {
+          updateParams.removeParents = previousParents;
+        }
+
+        await drive.files.update(updateParams);
         return true;
       } else {
         console.warn(`Failed to match finalist: ${targetName}`);
