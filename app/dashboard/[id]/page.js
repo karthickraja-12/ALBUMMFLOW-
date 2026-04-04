@@ -44,17 +44,19 @@ export default function EventDashboard({ params }) {
   const handleDownloadRaw = async () => {
     setDownloading(true);
     try {
-      const filenames = finalistPhotos.map(p => {
-        const decodedUrl = decodeURIComponent(p.url);
-        const parts = decodedUrl.split('/');
-        const fullName = parts[parts.length - 1]; 
-        return fullName.split('-').slice(1).join('-'); 
-      });
+      const photoData = finalistPhotos.map(p => ({
+        id: p.id,
+        googleFileId: p.google_file_id,
+        filename: decodeURIComponent(p.url).split('/').pop().split('-').slice(1).join('-')
+      }));
       
       const res = await fetch(`/api/events/${id}/gdrive/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filenames, eventName: event.name })
+        body: JSON.stringify({ 
+          photoData, 
+          eventName: event.name 
+        })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);

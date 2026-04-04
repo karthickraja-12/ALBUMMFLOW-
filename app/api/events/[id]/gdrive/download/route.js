@@ -8,7 +8,7 @@ export async function POST(request, { params }) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id: eventId } = await params;
-  const { filenames, eventName } = await request.json();
+  const { photoData, eventName } = await request.json();
 
   try {
     // 0. Fetch Photographer Profile for Personal GDrive Token
@@ -101,14 +101,32 @@ export async function POST(request, { params }) {
     }
 
     const downloadLinks = [];
-    const moveOperations = filenames.map(async (targetName) => {
-      const lowerTarget = targetName.toLowerCase();
+    const moveOperations = photoData.map(async (photo) => {
+      const { googleFileId, filename } = photo;
       
-      const matchedFile = candidateFiles.find(f => {
-         const driveNameLower = f.name.toLowerCase();
-         const sanitizedDriveName = f.name.replace(/[^a-zA-Z0-9.-]/g, '_').toLowerCase();
-         return driveNameLower === lowerTarget || sanitizedDriveName === lowerTarget;
-      });
+      let targetFileId = googleFileId;
+      let matchedFile = null;
+
+      // 1. If we have a Google File ID, try to use it directly
+      if (targetFileId) {
+        try {
+          const res = await drive.files.get({ fileId: targetFileId, fields: 'id, name, parents, webContentLink' });
+          matchedFile = res.data;
+        } catch (e) {
+          console.warn(`File ID ${targetFileId} not found, falling back to name match...`);
+          targetFileId = null;
+        }
+      }
+
+      // 2. Fallback to filename matching if ID is missing or invalid
+      if (!matchedFile) {
+        const lowerTarget = filename.toLowerCase();
+        matchedFile = candidateFiles.find(f => {
+           const driveNameLower = f.name.toLowerCase();
+           const sanitizedDriveName = f.name.replace(/[^a-zA-Z0-9.-]/g, '_').toLowerCase();
+           return driveNameLower === lowerTarget || sanitizedDriveName === lowerTarget;
+        });
+      }
 
       if (matchedFile) {
         console.log(`Matched finalist: ${matchedFile.name}`);
@@ -123,7 +141,6 @@ export async function POST(request, { params }) {
           fields: 'id, parents'
         };
 
-        // Only add removeParents if there are actually parents to remove
         if (previousParents) {
           updateParams.removeParents = previousParents;
         }
@@ -131,7 +148,7 @@ export async function POST(request, { params }) {
         await drive.files.update(updateParams);
         return true;
       } else {
-        console.warn(`Failed to match finalist: ${targetName}`);
+        console.warn(`Failed to match finalist: ${filename}`);
         return false;
       }
     });
