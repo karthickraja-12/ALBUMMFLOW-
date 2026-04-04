@@ -122,7 +122,16 @@ function SettingsContent() {
         {errorStatus && (
           <div className="glass animate-pop" style={{ border: '1px solid hsl(var(--danger))', background: 'rgba(239, 68, 68, 0.05)', color: 'hsl(var(--danger))', padding: '1.5rem 2rem', borderRadius: '1.5rem', marginBottom: '4rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             <AlertCircle size={24} />
-            <span style={{ fontWeight: 800, letterSpacing: '0.02em' }}>CONNECTION ERROR: {errorStatus.toUpperCase()}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <span style={{ fontWeight: 800, letterSpacing: '0.02em' }}>
+                {errorStatus === 'missing_token' ? 'CONNECTION REFRESH REQUIRED' : `CONNECTION ERROR: ${errorStatus.toUpperCase()}`}
+              </span>
+              {errorStatus === 'missing_token' && (
+                <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'rgba(239, 68, 68, 0.7)' }}>
+                  Your secure vault link needs to be refreshed. Please click "Reconnect Archive" below.
+                </span>
+              )}
+            </div>
           </div>
         )}
 

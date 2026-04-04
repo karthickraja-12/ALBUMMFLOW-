@@ -24,11 +24,16 @@ export async function POST(request, { params }) {
       .eq('id', user.id)
       .single();
 
-    const refreshToken = profile?.google_refresh_token || process.env.GOOGLE_REFRESH_TOKEN;
+    const refreshToken = profile?.google_refresh_token;
+
+    if (!refreshToken) {
+      throw new Error('Google Drive not connected. Please relink in Studio Settings.');
+    }
 
     const auth = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
+      (process.env.GOOGLE_CLIENT_ID || '').trim(),
+      (process.env.GOOGLE_CLIENT_SECRET || '').trim(),
+      (process.env.GOOGLE_REDIRECT_URI || '').trim()
     );
     auth.setCredentials({
       refresh_token: refreshToken

@@ -48,6 +48,25 @@ export async function DELETE(request, { params }) {
   const supabase = await createClient();
   const { id } = await params;
 
+  // 1. Fetch all photos for this event to get their paths
+  const { data: photos } = await supabase.from('photos').select('url').eq('event_id', id);
+
+  if (photos && photos.length > 0) {
+    // Collect specific file paths if needed, or simply delete the folder
+    // Our paths are structured as "events/[eventId]/..."
+    const folderPath = `events/${id}`;
+    
+    // List all files in the event folder
+    const { data: files } = await supabase.storage.from('albumflow').list(folderPath);
+    
+    if (files && files.length > 0) {
+      const pathsToDelete = files.map(f => `${folderPath}/${f.name}`);
+      await supabase.storage.from('albumflow').remove(pathsToDelete);
+      console.log(`Purged ${pathsToDelete.length} files from storage for event ${id}`);
+    }
+  }
+
+  // 2. Delete database records (Cascade should handle photos/selections if configured, but let's be safe)
   const { error } = await supabase.from('events').delete().eq('id', id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

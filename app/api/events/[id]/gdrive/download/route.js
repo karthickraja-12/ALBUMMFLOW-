@@ -18,11 +18,16 @@ export async function POST(request, { params }) {
       .eq('id', user.id)
       .single();
 
-    const refreshToken = profile?.google_refresh_token || process.env.GOOGLE_REFRESH_TOKEN;
+    const refreshToken = profile?.google_refresh_token;
+
+    if (!refreshToken) {
+      return NextResponse.json({ error: 'Google Drive is not connected. Please go to Settings and click "Connect Archive".' }, { status: 400 });
+    }
 
     const auth = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
+      (process.env.GOOGLE_CLIENT_ID || '').trim(),
+      (process.env.GOOGLE_CLIENT_SECRET || '').trim(),
+      (process.env.GOOGLE_REDIRECT_URI || '').trim()
     );
     auth.setCredentials({ refresh_token: refreshToken });
 
@@ -147,6 +152,10 @@ export async function POST(request, { params }) {
 
   } catch (error) {
     console.error("GDrive Move Error", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    let message = error.message;
+    if (message.includes('unauthorized_client')) {
+      message = "Google Authentication Failed (Unauthorized Client). This usually refers to incorrect Client ID or Secret in Vercel. Please double check your Environment Variables and Redeploy.";
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

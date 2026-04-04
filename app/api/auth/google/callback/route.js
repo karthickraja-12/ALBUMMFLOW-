@@ -12,17 +12,17 @@ export async function GET(request) {
 
   try {
     const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
+      (process.env.GOOGLE_CLIENT_ID || '').trim(),
+      (process.env.GOOGLE_CLIENT_SECRET || '').trim(),
+      (process.env.GOOGLE_REDIRECT_URI || '').trim()
     );
 
     const { tokens } = await oauth2Client.getToken(code);
     
     if (!tokens.refresh_token) {
-      // If we don't get a refresh token, it's usually because the user already authorized.
-      // We might want to warn them or handle it.
-      console.warn("No refresh token returned. User might already be authorized.");
+      // If we don't get a refresh token, it's usually because the user already authorized without prompt=consent.
+      console.warn("No refresh token returned. User already authorized.");
+      return NextResponse.redirect(new URL('/dashboard/settings?error=missing_token&reconnect=true', request.url));
     }
 
     // Save refresh_token to user's profile
@@ -32,7 +32,10 @@ export async function GET(request) {
     if (user && tokens.refresh_token) {
       const { error } = await supabase
         .from('profiles')
-        .update({ google_refresh_token: tokens.refresh_token })
+        .update({ 
+          google_refresh_token: tokens.refresh_token,
+          google_connected_at: new Date().toISOString()
+        })
         .eq('id', user.id);
       
       if (error) throw error;
