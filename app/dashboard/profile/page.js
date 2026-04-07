@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { User, Mail, Building, ShieldCheck, Settings, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '../../../lib/supabase';
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
@@ -11,23 +10,24 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function getProfile() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUser(session.user);
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        if (data) setProfile(data);
+      try {
+        const res = await fetch('/api/profile');
+        if (res.ok) {
+          const data = await res.json();
+          setProfile(data);
+          setUser(data); // In our new schema, User and Profile are the same record
+        }
+      } catch (e) {
+        console.error("Profile fetch error:", e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     getProfile();
   }, []);
 
   if (loading) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Loading Profile...</div>;
-  if (!user) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Please sign in to view your profile.</div>;
+  if (!profile) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Please sign in to view your profile.</div>;
 
   return (
     <div className="animate-fade" style={{ background: 'hsl(var(--background))', minHeight: '100vh', padding: '4rem 0' }}>
@@ -46,10 +46,10 @@ export default function ProfilePage() {
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '3.5rem', flexWrap: 'wrap' }}>
               <div className="flex-center" style={{ width: '100px', height: '100px', borderRadius: '30px', background: 'linear-gradient(135deg, hsl(var(--primary)), hsla(var(--primary), 0.7))', color: 'white', fontSize: '2.5rem', fontWeight: 800, boxShadow: '0 20px 40px -10px hsla(var(--primary), 0.4)' }}>
-                {profile?.full_name ? profile.full_name[0].toUpperCase() : user.email[0].toUpperCase()}
+                {profile?.name ? profile.name[0].toUpperCase() : profile?.email?.[0].toUpperCase()}
               </div>
               <div>
-                <h2 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>{profile?.full_name || 'Photographer'}</h2>
+                <h2 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>{profile?.name || 'Photographer'}</h2>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                   <span className="glass-pill" style={{ background: 'hsla(var(--primary), 0.1)', color: 'hsl(var(--primary))', fontSize: '0.8rem' }}>
                     {profile?.role === 'super_admin' ? 'Super Admin' : 'Pro Admin'}
@@ -70,7 +70,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'hsl(var(--muted))', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '0.4rem' }}>Email Address</label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{user.email}</p>
+                  <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{profile.email}</p>
                 </div>
               </div>
 
@@ -90,7 +90,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: 'hsl(var(--muted))', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '0.4rem' }}>Account ID</label>
-                  <p style={{ fontSize: '0.9rem', color: 'hsl(var(--muted))', fontFamily: 'monospace' }}>{user.id.substring(0, 18)}...</p>
+                  <p style={{ fontSize: '0.9rem', color: 'hsl(var(--muted))', fontFamily: 'monospace' }}>{profile.id.substring(0, 18)}...</p>
                 </div>
               </div>
             </div>

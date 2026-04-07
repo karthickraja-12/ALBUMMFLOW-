@@ -1,74 +1,86 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+import { s3Client } from "@/lib/s3";
+import { ListObjectsV2Command, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 
 export async function GET(request, { params }) {
-  const supabase = await createClient();
-  const { id } = await params;
+  try {
+    const { id } = await params;
 
-  // 1. Fetch Event first (Simple, no joins)
-  const { data: event, error: eventError } = await supabase
-    .from('events')
-    .select('*')
-    .eq('id', id)
-    .single();
+    const event = await prisma.event.findUnique({
+      where: { id },
+      include: {
+        photographer: {
+          select: {
+            company_name: true,
+            brand_color: true
+          }
+        },
+        photos: true,
+        selections: true
+      }
+    });
 
-  if (eventError || !event) {
-    console.error("Event Fetch Error:", eventError);
-    return NextResponse.json({ error: eventError?.message || "Event not found" }, { status: 404 });
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      event,
+      photos: event.photos || [],
+      selections: event.selections || [],
+      photographer: event.photographer
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  // 2. Fetch Photographer Profile (Separate query is more reliable)
-  // We check both photographer_id and user_id just in case
-  const userId = event.photographer_id || event.user_id;
-  const { data: photographer } = await supabase
-    .from('profiles')
-    .select('company_name, logo_url, brand_color')
-    .eq('id', userId)
-    .single();
-
-  const { data: photos } = await supabase
-    .from('photos')
-    .select('*')
-    .eq('event_id', id);
-
-  const { data: selections } = await supabase
-    .from('selections')
-    .select('*')
-    .eq('event_id', id);
-    
-  return NextResponse.json({ 
-    event, 
-    photos: photos || [], 
-    selections: selections || [],
-    photographer: photographer || null
-  });
 }
 
 export async function DELETE(request, { params }) {
-  const supabase = await createClient();
-  const { id } = await params;
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // 1. Fetch all photos for this event to get their paths
-  const { data: photos } = await supabase.from('photos').select('url').eq('event_id', id);
+  try {
+    const { id } = await params;
 
-  if (photos && photos.length > 0) {
-    // Collect specific file paths if needed, or simply delete the folder
-    // Our paths are structured as "events/[eventId]/..."
-    const folderPath = `events/${id}`;
-    
-    // List all files in the event folder
-    const { data: files } = await supabase.storage.from('albumflow').list(folderPath);
-    
-    if (files && files.length > 0) {
-      const pathsToDelete = files.map(f => `${folderPath}/${f.name}`);
-      await supabase.storage.from('albumflow').remove(pathsToDelete);
-      console.log(`Purged ${pathsToDelete.length} files from storage for event ${id}`);
+    // 1. Verify Ownership
+    const event = await prisma.event.findUnique({
+      where: { id },
+      select: { photographer_id: true }
+    });
+
+    if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    if (event.photographer_id !== session.user.id && session.user.role !== "super_admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // 2. Delete S3 Objects
+    const prefix = `events/${id}/`;
+    const listCommand = new ListObjectsV2Command({
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Prefix: prefix
+    });
+
+    const listedObjects = await s3Client.send(listCommand);
+
+    if (listedObjects.Contents && listedObjects.Contents.length > 0) {
+      const deleteParams = {
+        Bucket: process.env.AWS_S3_BUCKET_NAME,
+        Delete: { Objects: listedObjects.Contents.map(({ Key }) => ({ Key })) }
+      };
+      await s3Client.send(new DeleteObjectsCommand(deleteParams));
+      console.log(`Purged ${listedObjects.Contents.length} files from S3 for event ${id}`);
+    }
+
+    // 3. Delete Database Record (Cascades to photos/selections in schema)
+    await prisma.event.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete Event Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  // 2. Delete database records (Cascade should handle photos/selections if configured, but let's be safe)
-  const { error } = await supabase.from('events').delete().eq('id', id);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
 }

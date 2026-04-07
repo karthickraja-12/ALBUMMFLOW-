@@ -1,11 +1,13 @@
 "use client";
-import { useState } from 'react';
-import { supabase } from '../../../lib/supabase';
-import Link from 'next/link';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SignUp() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -13,11 +15,26 @@ export default function SignUp() {
     e.preventDefault();
     setError('');
     setSuccess('');
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-           setError(error.message);
-    } else {
-           setSuccess('Registration successful! You can now sign in.');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (res.ok) {
+        setSuccess('Registration successful! Redirecting to login...');
+        setTimeout(() => router.push('/login'), 2000);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Registration failed. Please try again.');
+      }
+    } catch (err) {
+      setError('A connection error occurred. Please check your internet.');
+    } finally {
+      setLoading(false);
     }
   };
 

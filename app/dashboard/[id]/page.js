@@ -44,9 +44,17 @@ export default function EventDashboard({ params }) {
   const handleRevokeSelection = async (photoId) => {
     if (!confirm("Remove this photo from the selection list?")) return;
     try {
-      const { error } = await supabase.from('selections').delete().eq('photo_id', photoId).eq('event_id', id);
-      if (error) throw error;
-      setSelections(prev => prev.filter(s => s.photo_id !== photoId));
+      const res = await fetch(`/api/events/${id}/select`, {
+        method: 'POST', // The select API handles both select and deselect based on state
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId, selected: false, guestName: 'Photographer' })
+      });
+      if (res.ok) {
+        setSelections(prev => prev.filter(s => s.photo_id !== photoId));
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to remove selection");
+      }
     } catch (err) {
        alert("Failed to remove selection: " + err.message);
     }
@@ -115,26 +123,36 @@ export default function EventDashboard({ params }) {
       const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true };
       const compressedFile = await imageCompression(item.file, options);
       
-      // 2. Uploading to Supabase
+      // 2. Get Presigned URL from AWS S3
       updateQueueItem(itemId, { status: 'uploading' });
-      const sanitizedName = item.file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const fileKey = `events/${id}/${Date.now()}-${sanitizedName}`;
+      const presignedRes = await fetch('/api/upload/presigned', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: item.file.name,
+          contentType: item.file.type,
+          eventId: id
+        })
+      });
+      
+      const { uploadUrl, key, publicUrl } = await presignedRes.json();
 
-      let retries = 3;
-      let uploadSuccess = false;
-      while (retries > 0 && !uploadSuccess) {
-        const { error } = await supabase.storage.from('albumflow').upload(fileKey, compressedFile);
-        if (!error) uploadSuccess = true;
-        else {
-          retries--;
-          if (retries > 0) await new Promise(r => setTimeout(r, 2000));
-        }
-      }
-      if (!uploadSuccess) throw new Error("Supabase Upload Failed");
+      // 3. Upload to S3 directly
+      const uploadSuccess = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: compressedFile,
+        headers: { 'Content-Type': item.file.type }
+      });
+      
+      if (!uploadSuccess.ok) throw new Error("AWS S3 Upload Failed");
 
-      // 3. Syncing to GDrive
+      // 4. Syncing to GDrive (Existing logic)
       updateQueueItem(itemId, { status: 'syncing' });
-      const params = new URLSearchParams({ filename: sanitizedName, mimeType: item.file.type, eventName: event.name });
+      const params = new URLSearchParams({ 
+        filename: item.file.name.replace(/[^a-zA-Z0-9.-]/g, '_'), 
+        mimeType: item.file.type, 
+        eventName: event.name 
+      });
       const gDriveRes = await fetch(`/api/events/${id}/gdrive/upload?${params.toString()}`, {
         method: 'POST',
         body: item.file 
@@ -142,20 +160,25 @@ export default function EventDashboard({ params }) {
 
       const googleData = gDriveRes.ok ? await gDriveRes.json() : null;
 
-      // 4. Finalize DB
-      const { data: { publicUrl } } = supabase.storage.from('albumflow').getPublicUrl(fileKey);
-      const { data: photoRecord, error: dbError } = await supabase.from('photos').insert([
-        { event_id: id, url: publicUrl, thumbnail_url: publicUrl, google_file_id: googleData?.googleFileId }
-      ]).select().single();
+      // 5. Finalize DB via API (New Prisma endpoint)
+      const photoRes = await fetch(`/api/events/${id}/photos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: publicUrl,
+          storage_path: key,
+          google_file_id: googleData?.googleFileId
+        })
+      });
 
-      if (dbError) throw dbError;
+      if (!photoRes.ok) throw new Error("Database Metadata Sync Failed");
+      const photoRecord = await photoRes.json();
 
       setPhotos(prev => [...prev, photoRecord]);
       updateQueueItem(itemId, { status: 'complete', progress: 100 });
 
     } catch (err) {
       console.error("Queue error:", err);
-      logger.error(`Upload failure for ${item.file.name}`, { error: err.message, eventId: id });
       updateQueueItem(itemId, { status: 'error', error: err.message });
     }
   };

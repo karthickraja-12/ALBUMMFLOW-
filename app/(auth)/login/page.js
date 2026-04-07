@@ -1,8 +1,8 @@
 "use client";
 import { useState } from 'react';
 import { Camera } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -14,20 +14,23 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
-    if (error) {
-           setError(error.message);
+    const result = await signIn('credentials', {
+      email,
+      password,
+      redirect: false
+    });
+    
+    if (result?.error) {
+      setError("Invalid credentials. Please try again.");
     } else {
-           // Extract name from metadata or use email prefix as fallback
-           const name = data.user.user_metadata?.full_name || email.split('@')[0];
-           setUserName(name);
-           setIsWelcoming(true);
-           
-           // Premium delay to show the greeting
-           setTimeout(() => {
-             window.location.href = '/dashboard';
-           }, 2500);
+      const name = email.split('@')[0];
+      setUserName(name);
+      setIsWelcoming(true);
+      
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 2500);
     }
   };
 

@@ -16,24 +16,21 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
+      // Fetch events from our new AWS-backed API
       const res = await fetch('/api/events');
       if (res.ok) {
         const data = await res.json();
         setEvents(data);
       }
       
-      // Fetch profile for branding
-      const { data: { user } } = await (await import('@/lib/supabase')).supabase.auth.getUser();
-      if (user) {
-        const { data: p } = await (await import('@/lib/supabase')).supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        if (p) setProfile(p);
+      // Fetch profile for branding from our new AWS-backed API
+      const profileRes = await fetch('/api/profile');
+      if (profileRes.ok) {
+        const p = await profileRes.json();
+        setProfile(p);
       }
     } catch (e) {
-      console.error(e);
+      console.error("Dashboard fetch error:", e);
     } finally {
       setLoading(false);
     }

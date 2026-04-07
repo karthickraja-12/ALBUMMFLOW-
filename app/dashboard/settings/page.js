@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import imageCompression from 'browser-image-compression';
 import { Settings, Image as ImageIcon, Globe, Lock, ExternalLink, Mail, CheckCircle, AlertCircle, Camera, Loader2 } from 'lucide-react';
 
@@ -24,24 +23,22 @@ function SettingsContent() {
   }, []);
 
   const fetchProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      if (data) {
+    try {
+      const res = await fetch('/api/profile');
+      if (res.ok) {
+        const data = await res.json();
         setProfile(data);
         setFormData({
           company_name: data.company_name || '',
-          logo_url: data.logo_url || '',
+          logo_url: data.image || '', // Using image field for logo
           brand_color: data.brand_color || '221 83% 53%'
         });
       }
+    } catch (err) {
+      console.error("Fetch profile failed:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleLogoUpload = async (e) => {
@@ -54,22 +51,28 @@ function SettingsContent() {
       const options = { maxSizeMB: 0.1, maxWidthOrHeight: 512, useWebWorker: true };
       const compressed = await imageCompression(file, options);
 
-      // 2. Upload to storage
-      const { data: { user } } = await supabase.auth.getUser();
-      const path = `branding/${user.id}-logo.png`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('albumflow')
-        .upload(path, compressed, { upsert: true });
+      // 2. Get Presigned URL
+      const presignedRes = await fetch('/api/upload/presigned', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: `logo-${Date.now()}.png`,
+          contentType: file.type,
+          eventId: 'branding' // Special folder for branding
+        })
+      });
+      const { uploadUrl, publicUrl } = await presignedRes.json();
 
-      if (uploadError) throw uploadError;
+      // 3. Upload to S3 directly
+      const uploadSuccess = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: compressed,
+        headers: { 'Content-Type': file.type }
+      });
 
-      // 3. Get Public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('albumflow')
-        .getPublicUrl(path);
+      if (!uploadSuccess.ok) throw new Error("AWS Logo Upload Failed");
 
-      // 4. Temporarily update local state (saves to DB on final save)
+      // 4. Update local state
       setFormData(prev => ({ ...prev, logo_url: publicUrl }));
       alert("Logo uploaded! Don't forget to click 'Save' below.");
     } catch (err) {
@@ -83,16 +86,24 @@ function SettingsContent() {
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase
-      .from('profiles')
-      .update(formData)
-      .eq('id', user.id);
-    
-    if (!error) alert("Branding updated successfully!");
-    setSaving(false);
-    // Refresh to update Navbar
-    window.location.reload();
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      
+      if (res.ok) alert("Branding updated successfully!");
+      else {
+        const err = await res.json();
+        throw new Error(err.message || "Update failed");
+      }
+    } catch (err) {
+      alert("Save failed: " + err.message);
+    } finally {
+      setSaving(false);
+      window.location.reload();
+    }
   };
 
   const connectGoogle = () => {
@@ -176,9 +187,9 @@ function SettingsContent() {
                          </>
                       ) : (
                         <>
-                          <Camera size={20} strokeWidth={3} />
-                          {formData.logo_url ? 'UPDATE SIGNATURE' : 'UPLOAD SIGNATURE'}
-                        </>
+                           <Camera size={20} strokeWidth={3} />
+                           {formData.logo_url ? 'UPDATE SIGNATURE' : 'UPLOAD SIGNATURE'}
+                         </>
                       )}
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} disabled={uploadingLogo} />
                     </label>
@@ -191,7 +202,6 @@ function SettingsContent() {
             </div>
           </div>
 
-          {/* Integration Section - Boutique Surface */}
           <div className="glass animate-pop" style={{ padding: '5rem', background: 'white', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '3rem', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.04)', animationDelay: '0.2s' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '4rem' }}>
               <div className="flex-center" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(234, 67, 53, 0.08)', color: '#EA4335' }}>

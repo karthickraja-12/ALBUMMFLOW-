@@ -1,69 +1,79 @@
-import { NextResponse } from 'next/server';
-import { google } from 'googleapis';
-import { createClient } from '@/lib/supabase-server';
-
-let ALBUMFLOW_ROOT_ID = null;
+import { NextResponse } from "next/server";
+import { google } from "googleapis";
+import { auth } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
 export async function POST(request, { params }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: eventId } = await params;
-  const { filename, mimeType, eventName } = await request.json();
+  const { eventName } = await request.json();
 
   try {
-    const fs = require('fs');
-    const path = require('path');
-    const keyPath = path.join(process.cwd(), 'gcp-keys.json');
-    const credentials = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+    // 0. Fetch Photographer Profile for Personal GDrive Token
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { google_refresh_token: true }
+    });
 
-    const auth = google.auth.fromJSON(credentials);
-    auth.scopes = ['https://www.googleapis.com/auth/drive'];
-
-    await auth.authorize();
-    const drive = google.drive({ version: 'v3', auth });
-
-    // 1. Locate root folder mathematically linked to User Drive
-    if (!ALBUMFLOW_ROOT_ID) {
-      const rootRes = await drive.files.list({
-        q: "mimeType='application/vnd.google-apps.folder' and name='AlbumFlow_Originals' and trashed=false",
-        fields: 'files(id, name)'
-      });
-      if (rootRes.data.files.length === 0) {
-        return NextResponse.json({ error: 'Cannot find AlbumFlow_Originals folder in your Google Drive. Make sure it is legally shared with the Service Account as Editor.' }, { status: 400 });
-      }
-      ALBUMFLOW_ROOT_ID = rootRes.data.files[0].id;
+    const refreshToken = user?.google_refresh_token;
+    if (!refreshToken) {
+      return NextResponse.json({ error: "Google Drive not connected." }, { status: 400 });
     }
 
-    // 2. Discover/Create Subfolder exclusively for this specific Event
-    const folderName = `${eventName}_Originals`;
+    const oauth2Client = new google.auth.OAuth2(
+      (process.env.GOOGLE_CLIENT_ID || "").trim(),
+      (process.env.GOOGLE_CLIENT_SECRET || "").trim(),
+      (process.env.GOOGLE_REDIRECT_URI || "").trim()
+    );
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+
+    const drive = google.drive({ version: "v3", auth: oauth2Client });
+
+    // 1. Ensure Root Folder exists
+    let rootFolderId = null;
+    const rootRes = await drive.files.list({
+      q: "mimeType='application/vnd.google-apps.folder' and name='AlbumFlow_Originals' and trashed=false",
+      fields: "files(id)"
+    });
+    if (rootRes.data.files && rootRes.data.files.length > 0) {
+      rootFolderId = rootRes.data.files[0].id;
+    } else {
+      const newRoot = await drive.files.create({
+        requestBody: { name: "AlbumFlow_Originals", mimeType: "application/vnd.google-apps.folder" },
+        fields: "id"
+      });
+      rootFolderId = newRoot.data.id;
+    }
+
+    // 2. Locate or Create Event Folder
+    const folderSuffix = eventId.slice(0, 5);
+    const folderName = `${eventName}_${folderSuffix}_Originals`;
     let eventFolderId = null;
 
     const folderRes = await drive.files.list({
-      q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and '${ALBUMFLOW_ROOT_ID}' in parents and trashed=false`,
-      fields: 'files(id)'
+      q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and '${rootFolderId}' in parents and trashed=false`,
+      fields: "files(id)"
     });
 
-    if (folderRes.data.files.length > 0) {
+    if (folderRes.data.files && folderRes.data.files.length > 0) {
       eventFolderId = folderRes.data.files[0].id;
     } else {
       const newFolder = await drive.files.create({
-        requestBody: { name: folderName, mimeType: 'application/vnd.google-apps.folder', parents: [ALBUMFLOW_ROOT_ID] },
-        fields: 'id'
+        requestBody: { name: folderName, mimeType: "application/vnd.google-apps.folder", parents: [rootFolderId] },
+        fields: "id"
       });
       eventFolderId = newFolder.data.id;
     }
 
-    const { token } = await auth.getAccessToken();
-    if (!token) throw new Error("Google Auth failed to generate a fresh Access Token.");
-
+    const { token } = await oauth2Client.getAccessToken();
     return NextResponse.json({ 
       accessToken: token, 
       eventFolderId: eventFolderId 
     });
   } catch (error) {
-    console.error("GDRIVE ERROR:", error);
+    console.error("GDRIVE LIST ERROR:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

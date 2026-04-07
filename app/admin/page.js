@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Check, X, Shield, Search, User } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
@@ -14,27 +13,51 @@ export default function SuperAdminDashboard() {
 
   const fetchProfiles = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('updated_at', { ascending: false });
-    
-    if (!error) setProfiles(data);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/users', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setProfiles(data);
+      }
+    } catch (e) {
+      console.error("Admin fetch error:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleApproval = async (userId, currentStatus) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_approved: !currentStatus })
-      .eq('id', userId);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, is_approved: !currentStatus })
+      });
+      if (res.ok) fetchProfiles();
+    } catch (e) {
+      console.error("Approval update error:", e);
+    }
+  };
+
+  const toggleRole = async (userId, currentRole) => {
+    if (!confirm(`Are you sure you want to change this user's role to ${currentRole === 'super_admin' ? 'Artisan' : 'Super Admin'}?`)) return;
     
-    if (!error) fetchProfiles();
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, role: currentRole === 'super_admin' ? 'photographer' : 'super_admin' })
+      });
+      if (res.ok) fetchProfiles();
+    } catch (e) {
+      console.error("Role update error:", e);
+    }
   };
 
   const filteredProfiles = profiles.filter(p => 
-    p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.company_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) return <div className="container flex-center" style={{ minHeight: '50vh' }}>Loading System State...</div>;
@@ -80,7 +103,10 @@ export default function SuperAdminDashboard() {
                       <div className="flex-center" style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(0,0,0,0.03)', color: 'black' }}>
                         <User size={20} strokeWidth={2.5} />
                       </div>
-                      <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>{profile.full_name || 'Anonymous'}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                         <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>{profile.name || 'Anonymous'}</span>
+                         <span style={{ fontSize: '0.75rem', color: 'rgba(0,0,0,0.3)', fontWeight: 600 }}>{profile.email}</span>
+                      </div>
                     </div>
                   </td>
                   <td style={{ padding: '2rem', color: 'rgba(0,0,0,0.5)', fontWeight: 700 }}>{profile.company_name}</td>
@@ -96,15 +122,25 @@ export default function SuperAdminDashboard() {
                     </span>
                   </td>
                   <td style={{ padding: '2rem', textAlign: 'right' }}>
-                    {profile.role !== 'super_admin' && (
+                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
                       <button 
-                        onClick={() => toggleApproval(profile.id, profile.is_approved)}
-                        className={profile.is_approved ? "btn-secondary" : "btn-primary"}
-                        style={{ padding: '0.75rem 1.75rem', fontSize: '0.8rem' }}
+                        onClick={() => toggleRole(profile.id, profile.role)}
+                        className="btn-secondary"
+                        style={{ padding: '0.75rem 1.25rem', fontSize: '0.7rem', opacity: 0.6 }}
                       >
-                        {profile.is_approved ? 'REVOKE ACCESS' : 'GRANT ACCESS'}
+                        {profile.role === 'super_admin' ? 'DEMOTE' : 'MAKE ADMIN'}
                       </button>
-                    )}
+
+                      {profile.role !== 'super_admin' && (
+                        <button 
+                          onClick={() => toggleApproval(profile.id, profile.is_approved)}
+                          className={profile.is_approved ? "btn-secondary" : "btn-primary"}
+                          style={{ padding: '0.75rem 1.75rem', fontSize: '0.8rem' }}
+                        >
+                          {profile.is_approved ? 'REVOKE ACCESS' : 'GRANT ACCESS'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

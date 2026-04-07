@@ -1,19 +1,16 @@
 "use client";
 import { useState } from 'react';
-import { supabase } from '../../../lib/supabase';
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleReset = async (e) => {
     e.preventDefault();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) setMessage(`Error: ${error.message}`);
-    else setMessage('Password reset link sent to your email.');
+    // Supabase's built-in resetPasswordForEmail is gone. 
+    // For now, we will show a message to contact the admin.
+    setMessage("Password reset functionality is currently being migrated. Please contact your studio administrator to reset your credentials manually in RDS.");
   };
 
   return (

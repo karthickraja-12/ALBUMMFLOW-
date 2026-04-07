@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------
+// NEXTAUTH STANDARD MODELS
+// ------------------------------------------------------
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ------------------------------------------------------
+// ALBUMFLOW MODELS
+// ------------------------------------------------------
+
+// Replaces Supabase 'profiles' & ties into NextAuth
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  
+  // AlbumFlow Custom Fields (migrated from 'profiles')
+  role          String    @default("photographer") // 'super_admin' or 'photographer'
+  is_approved   Boolean   @default(false)
+  company_name  String?
+  brand_color   String?
+  password      String?    // Hashed password for Credentials provider
+  
+  // Google Drive Archival Vault (migrated from 'profiles')
+  google_refresh_token String? @db.Text
+  google_access_token  String? @db.Text
+  
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  // Relationships
+  accounts      Account[]
+  sessions      Session[]
+  events        Event[]
+  monitoring_logs MonitoringLog[]
+}
+
+model Event {
+  id              String      @id @default(cuid())
+  photographer_id String
+  name            String
+  date            DateTime?
+  max_selections  Int         @default(50)
+  is_finalized    Boolean     @default(false)
+  created_at      DateTime    @default(now())
+  
+  // Relationships
+  photographer    User        @relation(fields: [photographer_id], references: [id], onDelete: Cascade)
+  photos          Photo[]
+  selections      Selection[]
+}
+
+model Photo {
+  id           String       @id @default(cuid())
+  event_id     String
+  url          String       // The CloudFront/S3 URL
+  storage_path String       // The explicit S3 path for easy deletion
+  created_at   DateTime     @default(now())
+  
+  // Relationships
+  event        Event        @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  selections   Selection[]
+}
+
+model Selection {
+  id         String   @id @default(cuid())
+  event_id   String
+  photo_id   String
+  user_name  String   // Guest name who selected it
+  created_at DateTime @default(now())
+  
+  // Relationships
+  event      Event    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  photo      Photo    @relation(fields: [photo_id], references: [id], onDelete: Cascade)
+
+  @@unique([event_id, photo_id, user_name]) // A guest can only select a specific photo once
+}
+
+model MonitoringLog {
+  id         String   @id @default(cuid())
+  user_id    String?
+  level      String   @default("error")
+  message    String
+  details    Json?
+  source     String   @default("client")
+  created_at DateTime @default(now())
+  
+  user       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}

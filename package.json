@@ -9,19 +9,24 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.10.0",
-    "@supabase/supabase-js": "^2.101.1",
+    "@auth/prisma-adapter": "^2.11.1",
+    "@aws-sdk/client-s3": "^3.1024.0",
+    "@aws-sdk/s3-request-presigner": "^3.1024.0",
+    "bcryptjs": "^3.0.3",
     "browser-image-compression": "^2.0.2",
     "googleapis": "^171.4.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.2",
+    "next-auth": "^5.0.0-beta.25",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@prisma/client": "^5.22.0",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4"
   }
 }
