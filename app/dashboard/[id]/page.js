@@ -2,7 +2,7 @@
 import { useState, useEffect, use } from 'react';
 import { UploadCloud, ArrowLeft, Copy } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '../../../lib/supabase';
+
 import imageCompression from 'browser-image-compression';
 import { logger } from '../../../lib/logger';
 
