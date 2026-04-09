@@ -10,27 +10,29 @@ export async function POST(request, { params }) {
 
   try {
     const { id } = await params;
-    const { url, storage_path, google_file_id } = await request.json();
+    const { url, storage_path, original_storage_path } = await request.json();
 
     if (!url || !storage_path) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const photo = await prisma.photo.create({
-      data: {
-        event_id: id,
-        url,
-        storage_path,
-        // We include thumbnails as the same URL for now, or cloudfront can handle it
-        selections: {
-          // Initialize empty if needed
+    let photo;
+    try {
+      photo = await prisma.photo.create({
+        data: {
+          event_id: id,
+          url,
+          storage_path,
+          original_storage_path: original_storage_path || null,
         }
-      }
-    });
+      });
+    } catch (e) {
+      // Fallback if new columns don't exist yet (before prisma db push)
+      photo = await prisma.photo.create({
+        data: { event_id: id, url, storage_path }
+      });
+    }
 
-    // If Google Drive ID exists, we could store it in a metadata field if added to schema,
-    // but the current schema uses explicit fields.
-    
     return NextResponse.json(photo);
   } catch (error) {
     console.error("Photo DB Sync Error:", error);

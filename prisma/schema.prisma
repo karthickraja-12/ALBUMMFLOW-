@@ -3,9 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
+
 
 // ------------------------------------------------------
 // NEXTAUTH STANDARD MODELS
@@ -94,11 +96,13 @@ model Event {
 }
 
 model Photo {
-  id           String       @id @default(cuid())
-  event_id     String
-  url          String       // The CloudFront/S3 URL
-  storage_path String       // The explicit S3 path for easy deletion
-  created_at   DateTime     @default(now())
+  id                      String       @id @default(cuid())
+  event_id                String
+  url                     String       // Compressed S3 URL (for gallery display)
+  storage_path            String       // Compressed S3 path
+  original_storage_path   String?      // Original full-size S3 path (temporary, deleted after sync)
+  google_file_id          String?      // Google Drive File ID
+  created_at              DateTime     @default(now())
   
   // Relationships
   event        Event        @relation(fields: [event_id], references: [id], onDelete: Cascade)

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
+import { Plus, Image as ImageIcon, Trash2, Zap, LayoutGrid, Sparkles, FolderOpen, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { Plus, Image as ImageIcon, Trash2 } from 'lucide-react';
 
 export default function Dashboard() {
   const [events, setEvents] = useState([]);
@@ -16,14 +16,12 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     try {
-      // Fetch events from our new AWS-backed API
       const res = await fetch('/api/events');
       if (res.ok) {
         const data = await res.json();
         setEvents(data);
       }
       
-      // Fetch profile for branding from our new AWS-backed API
       const profileRes = await fetch('/api/profile');
       if (profileRes.ok) {
         const p = await profileRes.json();
@@ -56,131 +54,132 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <div className="container flex-center" style={{ minHeight: '50vh' }}>Loading...</div>;
+  if (loading) return (
+    <div className="flex-center" style={{ minHeight: '100vh', gap: '2rem', flexDirection: 'column', background: '#EFE6DE' }}>
+      <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid rgba(154, 0, 2, 0.1)', borderTopColor: '#9A0002', borderRadius: '50%' }}></div>
+      <span style={{ fontWeight: 900, letterSpacing: '0.4em', color: '#9A0002', fontSize: '0.75rem' }}>OPENING ARCHIVES...</span>
+    </div>
+  );
 
   return (
-    <div className="animate-fade" style={{ background: 'var(--background)', minHeight: '100vh', padding: '6rem 0' }}>
-      <div className="container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8rem' }}>
-          <div>
-            <div style={{ letterSpacing: '0.5em', color: 'rgba(0,0,0,0.2)', fontWeight: 900, fontSize: '0.7rem', marginBottom: '2.5rem', textTransform: 'uppercase' }}>
-              OFFICIAL ATELIER
+    <div className="animate-fade" style={{ minHeight: '100vh', padding: '6rem 0', background: '#EFE6DE' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .dash-header { margin-bottom: 4rem !important; }
+          .dash-title { font-size: 3.5rem !important; }
+          .coll-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+        }
+      `}</style>
+      
+      <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+        <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8rem' }}>
+          <div className="animate-pop">
+            <div style={{ letterSpacing: '0.4em', color: '#9A0002', fontWeight: 900, fontSize: '0.75rem', marginBottom: '2.5rem', textTransform: 'uppercase', opacity: 0.6 }}>
+               CONTROL CONSOLE
             </div>
-            <h2 className="text-signature" style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '1.25rem' }}>
-              {profile?.company_name || 'STUDIO'}
-            </h2>
-            <h1 style={{ fontSize: '6rem', fontWeight: 800, marginBottom: '0.5rem', letterSpacing: '-0.06em', lineHeight: 0.9 }}>COLLECTIONS</h1>
-            <p style={{ color: 'rgba(0,0,0,0.3)', fontSize: '1.15rem', fontWeight: 700, letterSpacing: '0.01em', marginTop: '1.5rem' }}>Curating the archives with high-fidelity precision.</p>
+            <h1 className="dash-title" style={{ fontSize: 'clamp(3rem, 8vw, 6rem)', fontWeight: 900, color: '#9A0002', marginBottom: '1rem', letterSpacing: '-0.04em', lineHeight: 0.9 }}>CATALOG</h1>
+            <p style={{ color: 'rgba(26, 26, 26, 0.5)', fontSize: '1.2rem', fontWeight: 600, marginTop: '1.5rem', maxWidth: '480px' }}>
+              Precision management for the {profile?.company_name || 'Studio'} archives.
+            </p>
           </div>
           <button 
             onClick={() => setIsCreating(true)} 
-            className="btn-primary"
-            style={{ padding: '1.25rem 3rem', fontSize: '0.9rem' }}
+            className="btn-primary animate-pop"
+            style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
           >
-            <Plus size={22} strokeWidth={4} /> NEW COLLECTION
+            <Plus size={20} /> NEW COLLECTION
           </button>
         </div>
 
-        {/* Cinematic Create Form */}
+        {/* Editorial Create Form */}
         {isCreating && (
-          <div className="glass animate-pop" style={{ padding: '5rem', marginBottom: '6rem', background: 'white', border: '1px solid rgba(0,0,0,0.05)' }}>
-            <h3 style={{ fontSize: '2.5rem', marginBottom: '3.5rem', letterSpacing: '-0.02em', fontWeight: 800 }}>Begin New Archive</h3>
-            <form onSubmit={handleCreate} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '4rem', alignItems: 'end' }}>
+          <div className="glass-alive animate-pop" style={{ padding: '4rem', marginBottom: '8rem', background: 'white', borderRadius: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3.5rem' }}>
+               <Sparkles size={24} color="#9A0002" />
+               <h3 style={{ fontSize: '2rem', color: '#9A0002', fontWeight: 900 }}>Create New Archive</h3>
+            </div>
+            <form onSubmit={handleCreate} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', alignItems: 'end' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 900, marginBottom: '1.25rem', color: 'rgba(0,0,0,0.3)', letterSpacing: '0.2em' }}>COLLECTION NAME</label>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 900, marginBottom: '1rem', color: 'rgba(26, 26, 26, 0.4)', letterSpacing: '0.2rem' }}>NAME</label>
                 <input 
                   type="text" required 
-                  style={{ width: '100%', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid rgba(0,0,0,0.08)', background: 'var(--background)', color: 'black', fontSize: '1.1rem', fontWeight: 600 }} 
+                  style={{ width: '100%', padding: '1.5rem', borderRadius: '1rem', border: '1px solid rgba(154, 0, 2, 0.1)', background: '#F9F7F5', color: '#1a1a1a', fontSize: '1.1rem', fontWeight: 600 }} 
                   className="input-focus"
                   value={newEvent.name} onChange={e => setNewEvent({...newEvent, name: e.target.value})} 
-                  placeholder="e.g. Modern Minimalist Wedding"
+                  placeholder="e.g. Summer Wedding 2026"
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 900, marginBottom: '1.25rem', color: 'rgba(0,0,0,0.3)', letterSpacing: '0.2em' }}>SELECTION QUOTA</label>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 900, marginBottom: '1rem', color: 'rgba(26, 26, 26, 0.4)', letterSpacing: '0.2rem' }}>SELECTION CAP</label>
                 <input 
                   type="number" required 
-                  style={{ width: '100%', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid rgba(0,0,0,0.08)', background: 'var(--background)', color: 'black', fontSize: '1.1rem', fontWeight: 600 }} 
+                  style={{ width: '100%', padding: '1.5rem', borderRadius: '1rem', border: '1px solid rgba(154, 0, 2, 0.1)', background: '#F9F7F5', color: '#1a1a1a', fontSize: '1.1rem', fontWeight: 600 }} 
                   className="input-focus"
                   value={newEvent.max_selections} onChange={e => setNewEvent({...newEvent, max_selections: e.target.value})} 
                 />
               </div>
-              <div style={{ display: 'flex', gap: '1.5rem' }}>
-                <button type="submit" className="btn-primary" style={{ flex: 2, padding: '1.5rem' }}>LAUNCH ARCHIVE</button>
-                <button type="button" onClick={() => setIsCreating(false)} className="btn-secondary" style={{ flex: 1, padding: '1.5rem' }}>CANCEL</button>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" className="btn-primary" style={{ flex: 1 }}>INITIALIZE</button>
+                <button type="button" onClick={() => setIsCreating(false)} className="btn-secondary" style={{ flex: 1 }}>CANCEL</button>
               </div>
             </form>
           </div>
         )}
 
-        {/* Collection Grid - Editorial Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '4rem' }}>
+        {/* Collection Grid */}
+        <div className="coll-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '3rem' }}>
           {events.map((ev, index) => (
-            <Link href={`/dashboard/${ev.id}`} key={ev.id} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+            <Link href={`/dashboard/${ev.id}`} key={ev.id} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div 
-                className="glass animate-pop" 
+                className="glass-alive animate-pop" 
                 style={{ 
-                  padding: '4rem 3.5rem', 
-                  transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)', 
-                  cursor: 'pointer',
-                  animationDelay: `${index * 0.1}s`,
-                  position: 'relative',
-                  overflow: 'hidden',
+                  padding: '4rem 3rem', 
                   background: 'white',
-                  border: '1px solid rgba(0,0,0,0.03)',
-                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.03)'
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.transform = 'translateY(-12px)';
-                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)';
-                  e.currentTarget.style.boxShadow = '0 40px 80px -20px rgba(0,0,0,0.08)';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.borderColor = 'rgba(0,0,0,0.03)';
-                  e.currentTarget.style.boxShadow = '0 10px 30px -10px rgba(0,0,0,0.03)';
+                  borderRadius: '1.5rem',
+                  position: 'relative',
+                  border: '1px solid rgba(154, 0, 2, 0.05)',
+                  animationDelay: `${index * 0.05}s`
                 }}
               >
                 <button 
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteEvent(ev.id); }} 
-                  style={{ position: 'absolute', top: 32, right: 32, color: 'rgba(0,0,0,0.1)', transition: 'all 0.3s' }}
-                  onMouseOver={e => e.currentTarget.style.color = 'hsl(var(--danger))'}
-                  onMouseOut={e => e.currentTarget.style.color = 'rgba(0,0,0,0.1)'}
+                  style={{ position: 'absolute', top: '2rem', right: '2rem', color: 'rgba(26, 26, 26, 0.1)', background: 'none', border: 'none', cursor: 'pointer' }}
+                  onMouseOver={e => e.currentTarget.style.color = '#9A0002'}
+                  onMouseOut={e => e.currentTarget.style.color = 'rgba(26, 26, 26, 0.1)'}
                 >
-                  <Trash2 size={20} strokeWidth={2.5} />
+                  <Trash2 size={18} />
                 </button>
                 
-                <h3 style={{ fontSize: '2.25rem', marginBottom: '3rem', paddingRight: '3rem', lineHeight: 1.1, fontWeight: 800, letterSpacing: '-0.03em' }}>{ev.name}</h3>
+                <h3 style={{ fontSize: '2.25rem', color: '#9A0002', marginBottom: '3rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>{ev.name}</h3>
                 
-                <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                    <div style={{ 
-                     padding: '0.65rem 1.5rem', 
-                     borderRadius: '999px', 
+                     padding: '0.6rem 1.25rem', 
+                     borderRadius: '0.75rem', 
                      fontSize: '0.7rem', 
                      fontWeight: 900, 
                      letterSpacing: '0.15em',
                      textTransform: 'uppercase',
-                     background: ev.is_finalized ? 'rgba(52, 211, 153, 0.08)' : 'var(--background)',
-                     color: ev.is_finalized ? '#059669' : 'rgba(0,0,0,0.4)',
-                     border: '1px solid rgba(0,0,0,0.05)'
+                     background: ev.is_finalized ? 'rgba(154, 0, 2, 0.1)' : 'rgba(26, 26, 26, 0.03)',
+                     color: ev.is_finalized ? '#9A0002' : 'rgba(26, 26, 26, 0.4)',
                    }}>
-                     {ev.is_finalized ? 'Finalized' : 'In Selection'}
+                     {ev.is_finalized ? 'LOCKED' : 'ACTIVE'}
                    </div>
-                   <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'rgba(0,0,0,0.2)', letterSpacing: '0.05em' }}>
-                     {ev.max_selections} CAP
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#9A0002', fontWeight: 800, fontSize: '0.8rem' }}>
+                      VIEW <ChevronRight size={16} />
                    </div>
                 </div>
-
-                {/* Editorial Accent Line */}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '4px', background: 'var(--primary)', opacity: 0.05 }}></div>
               </div>
             </Link>
           ))}
           
           {events.length === 0 && !isCreating && (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '12rem 2rem', color: 'rgba(0,0,0,0.1)', border: '1px dashed rgba(0,0,0,0.1)', borderRadius: '2.5rem' }}>
-              <ImageIcon size={64} strokeWidth={1} style={{ marginBottom: '2.5rem', opacity: 0.2 }} />
-              <p style={{ fontSize: '1.5rem', fontWeight: 600, letterSpacing: '-0.02em', color: 'rgba(0,0,0,0.3)' }}>Your archive is silent. Begin your first collection.</p>
+            <div className="glass-alive flex-center" style={{ gridColumn: '1 / -1', padding: '12rem 2rem', background: 'white', borderRadius: '2rem', borderStyle: 'dashed', borderColor: 'rgba(154, 0, 2, 0.1)', flexDirection: 'column', gap: '2rem' }}>
+              <FolderOpen size={48} color="rgba(154, 0, 2, 0.2)" />
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: '1.5rem', fontWeight: 900, color: '#9A0002', marginBottom: '0.5rem' }}>No collections found.</p>
+                <p style={{ color: 'rgba(26, 26, 26, 0.4)', fontWeight: 600 }}>Create your first archive to begin curating.</p>
+              </div>
             </div>
           )}
         </div>

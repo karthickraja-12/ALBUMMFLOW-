@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import imageCompression from 'browser-image-compression';
-import { Settings, Image as ImageIcon, Globe, Lock, ExternalLink, Mail, CheckCircle, AlertCircle, Camera, Loader2 } from 'lucide-react';
+import { Settings, Image as ImageIcon, Globe, Lock, ExternalLink, Mail, CheckCircle, AlertCircle, Camera, Loader2, Zap, ShieldCheck, ChevronRight, Sparkles } from 'lucide-react';
 
 function SettingsContent() {
   const searchParams = useSearchParams();
@@ -30,7 +30,7 @@ function SettingsContent() {
         setProfile(data);
         setFormData({
           company_name: data.company_name || '',
-          logo_url: data.image || '', // Using image field for logo
+          logo_url: data.image || '', 
           brand_color: data.brand_color || '221 83% 53%'
         });
       }
@@ -47,23 +47,20 @@ function SettingsContent() {
 
     setUploadingLogo(true);
     try {
-      // 1. Compress logo (small icon)
       const options = { maxSizeMB: 0.1, maxWidthOrHeight: 512, useWebWorker: true };
       const compressed = await imageCompression(file, options);
 
-      // 2. Get Presigned URL
       const presignedRes = await fetch('/api/upload/presigned', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           filename: `logo-${Date.now()}.png`,
           contentType: file.type,
-          eventId: 'branding' // Special folder for branding
+          eventId: 'branding'
         })
       });
       const { uploadUrl, publicUrl } = await presignedRes.json();
 
-      // 3. Upload to S3 directly
       const uploadSuccess = await fetch(uploadUrl, {
         method: 'PUT',
         body: compressed,
@@ -72,9 +69,8 @@ function SettingsContent() {
 
       if (!uploadSuccess.ok) throw new Error("AWS Logo Upload Failed");
 
-      // 4. Update local state
       setFormData(prev => ({ ...prev, logo_url: publicUrl }));
-      alert("Logo uploaded! Don't forget to click 'Save' below.");
+      alert("Logo uploaded! Don't forget to click 'Commit' below.");
     } catch (err) {
       console.error(err);
       alert("Logo upload failed: " + err.message);
@@ -110,35 +106,40 @@ function SettingsContent() {
     window.location.href = '/api/auth/google';
   };
 
-  if (loading) return <div className="container flex-center" style={{ minHeight: '50vh' }}>Loading Settings...</div>;
+  if (loading) return (
+    <div className="flex-center" style={{ minHeight: '100vh', gap: '2rem', flexDirection: 'column', background: '#EFE6DE' }}>
+      <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid rgba(154, 0, 2, 0.1)', borderTopColor: '#9A0002', borderRadius: '50%' }}></div>
+      <span style={{ fontWeight: 900, letterSpacing: '0.4em', color: '#9A0002', fontSize: '0.75rem' }}>INITIALIZING ATELIER...</span>
+    </div>
+  );
 
   return (
-    <div className="animate-fade" style={{ background: 'var(--background)', minHeight: '100vh', padding: '6rem 0' }}>
-      <div className="container" style={{ maxWidth: '1000px' }}>
+    <div className="animate-fade" style={{ minHeight: '100vh', padding: '6rem 0', background: '#EFE6DE' }}>
+      <div className="container" style={{ maxWidth: '1000px', position: 'relative', zIndex: 1 }}>
         
         {/* Editorial Brand Header */}
-        <div style={{ marginBottom: '6rem' }}>
-          <div style={{ letterSpacing: '0.4em', color: 'rgba(0,0,0,0.3)', fontWeight: 900, fontSize: '0.7rem', marginBottom: '1.5rem', textTransform: 'uppercase' }}>STUDIO MANAGEMENT</div>
-          <h1 className="text-signature" style={{ fontSize: '4.5rem', marginBottom: '1rem', letterSpacing: '-0.04em' }}>BRAND ATELIER</h1>
-          <p style={{ color: 'rgba(0,0,0,0.4)', fontSize: '1.2rem', fontWeight: 600 }}>Refining your studio's digital identity and archival orchestration.</p>
+        <div style={{ marginBottom: '8rem' }}>
+          <div style={{ letterSpacing: '0.4em', color: '#9A0002', fontWeight: 900, fontSize: '0.75rem', marginBottom: '2.5rem', textTransform: 'uppercase', opacity: 0.6 }}>STUDIO MANAGEMENT</div>
+          <h1 style={{ fontSize: 'clamp(3rem, 8vw, 6rem)', marginBottom: '1.5rem', letterSpacing: '-0.04em', fontWeight: 900, color: '#9A0002', lineHeight: 0.9 }}>BRAND ATELIER</h1>
+          <p style={{ color: 'rgba(26, 26, 26, 0.5)', fontSize: '1.2rem', fontWeight: 600, maxWidth: '500px' }}>Refining your studio's digital identity and archival orchestration with absolute precision.</p>
         </div>
 
         {syncStatus === 'success' && (
-          <div className="glass animate-pop" style={{ border: '1px solid #059669', background: 'rgba(5, 150, 105, 0.05)', color: '#059669', padding: '1.5rem 2rem', borderRadius: '1.5rem', marginBottom: '4rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            <CheckCircle size={24} />
-            <span style={{ fontWeight: 800, letterSpacing: '0.02em' }}>GOOGLE DRIVE CONNECTED SUCCESSFULLY</span>
+          <div className="glass-alive animate-pop" style={{ background: '#9A0002', color: 'white', padding: '1.25rem 2.5rem', borderRadius: '1rem', marginBottom: '4rem', display: 'flex', alignItems: 'center', gap: '1.25rem', border: 'none' }}>
+            <CheckCircle size={20} />
+            <span style={{ fontWeight: 900, letterSpacing: '0.1em', fontSize: '0.8rem' }}>GOOGLE VAULT SYNC: ONLINE</span>
           </div>
         )}
 
         {errorStatus && (
-          <div className="glass animate-pop" style={{ border: '1px solid hsl(var(--danger))', background: 'rgba(239, 68, 68, 0.05)', color: 'hsl(var(--danger))', padding: '1.5rem 2rem', borderRadius: '1.5rem', marginBottom: '4rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div className="glass-alive animate-pop" style={{ background: 'white', border: '1px solid #9A0002', color: '#9A0002', padding: '1.5rem 2.5rem', borderRadius: '1rem', marginBottom: '4rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             <AlertCircle size={24} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <span style={{ fontWeight: 800, letterSpacing: '0.02em' }}>
+              <span style={{ fontWeight: 900, letterSpacing: '0.1em' }}>
                 {errorStatus === 'missing_token' ? 'CONNECTION REFRESH REQUIRED' : `CONNECTION ERROR: ${errorStatus.toUpperCase()}`}
               </span>
               {errorStatus === 'missing_token' && (
-                <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'rgba(239, 68, 68, 0.7)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.6 }}>
                   Your secure vault link needs to be refreshed. Please click "Reconnect Archive" below.
                 </span>
               )}
@@ -147,54 +148,52 @@ function SettingsContent() {
         )}
 
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}>
-          {/* Identity Section - Boutique Surface */}
-          <div className="glass animate-pop" style={{ padding: '5rem', background: 'white', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '3rem', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.04)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '5rem' }}>
-              <div className="flex-center" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(0,0,0,0.03)', color: 'black' }}>
-                <Globe size={24} strokeWidth={2.5} />
-              </div>
-              <h3 style={{ fontSize: '2rem', letterSpacing: '-0.03em', fontWeight: 800 }}>Studio Identity</h3>
+          {/* Identity Section */}
+          <div className="glass-alive animate-pop" style={{ padding: '4rem', background: 'white', borderRadius: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '4rem' }}>
+               <Globe size={24} color="#9A0002" />
+               <h3 style={{ fontSize: '2rem', color: '#9A0002', fontWeight: 900 }}>Studio Identity</h3>
             </div>
 
             <div style={{ display: 'grid', gap: '4rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 900, color: 'rgba(0,0,0,0.3)', marginBottom: '1.5rem', letterSpacing: '0.2em' }}>OFFICIAL STUDIO NAME</label>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 900, color: 'rgba(26, 26, 26, 0.4)', marginBottom: '1.25rem', letterSpacing: '0.2em' }}>OFFICIAL ATELIER NAME</label>
                 <input 
                   type="text" 
                   className="input-focus"
-                  style={{ width: '100%', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid rgba(0,0,0,0.08)', background: 'var(--background)', color: 'black', fontSize: '1.1rem', fontWeight: 600 }}
+                  style={{ width: '100%', padding: '1.5rem', borderRadius: '1rem', border: '1px solid rgba(154, 0, 2, 0.1)', background: '#F9F7F5', color: '#1a1a1a', fontSize: '1.1rem', fontWeight: 600 }}
                   value={formData.company_name} onChange={e => setFormData({...formData, company_name: e.target.value})}
                   placeholder="e.g. Raja Wedding Cinema"
                 />
               </div>
               
               <div>
-                <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 900, color: 'rgba(0,0,0,0.3)', marginBottom: '2.5rem', letterSpacing: '0.2em' }}>SIGNATURE LOGO (MAXIMIZED PREVIEW)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5rem', flexWrap: 'wrap' }}>
-                  <div style={{ width: '220px', height: '220px', borderRadius: '2.5rem', border: '1px solid rgba(0,0,0,0.05)', background: 'rgba(0,0,0,0.02)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', boxShadow: 'inset 0 10px 30px rgba(0,0,0,0.02)' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 900, color: 'rgba(26, 26, 26, 0.4)', marginBottom: '2.5rem', letterSpacing: '0.2em' }}>SIGNATURE LOGO</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4rem', flexWrap: 'wrap' }}>
+                  <div style={{ width: '220px', height: '220px', borderRadius: '2rem', background: '#F9F7F5', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', border: '1px solid rgba(154, 0, 2, 0.05)' }}>
                     {formData.logo_url ? (
                       <img src={formData.logo_url} alt="Logo Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     ) : (
-                      <ImageIcon size={60} style={{ color: 'rgba(0,0,0,0.1)' }} />
+                      <ImageIcon size={48} color="rgba(154, 0, 2, 0.1)" />
                     )}
                   </div>
                   <div style={{ flex: 1, minWidth: '300px' }}>
-                    <label className="btn-primary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '1rem', padding: '1.25rem 2.5rem', fontSize: '0.9rem' }}>
+                    <label className="btn-primary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
                       {uploadingLogo ? (
                          <>
                            <Loader2 size={20} className="animate-spin" />
-                           SYNCHRONIZING...
+                           SYNCING...
                          </>
                       ) : (
                         <>
-                           <Camera size={20} strokeWidth={3} />
+                           <Camera size={20} />
                            {formData.logo_url ? 'UPDATE SIGNATURE' : 'UPLOAD SIGNATURE'}
                          </>
                       )}
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} disabled={uploadingLogo} />
                     </label>
-                    <p style={{ marginTop: '2.5rem', fontSize: '0.95rem', color: 'rgba(0,0,0,0.4)', lineHeight: 1.8, fontWeight: 500 }}>
-                      Elevate your galleries with a high-resolution signature. We recommend a clean SVG or PNG with transparent background for the highest fidelity.
+                    <p style={{ marginTop: '2.5rem', fontSize: '1rem', color: 'rgba(26, 26, 26, 0.4)', lineHeight: 1.6, fontWeight: 500 }}>
+                      Elevate your galleries with a high-resolution signature. We recommend a clean SVG or PNG with transparent background.
                     </p>
                   </div>
                 </div>
@@ -202,28 +201,26 @@ function SettingsContent() {
             </div>
           </div>
 
-          <div className="glass animate-pop" style={{ padding: '5rem', background: 'white', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '3rem', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.04)', animationDelay: '0.2s' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '4rem' }}>
-              <div className="flex-center" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(234, 67, 53, 0.08)', color: '#EA4335' }}>
-                <Mail size={24} strokeWidth={2.5} />
-              </div>
-              <h3 style={{ fontSize: '2rem', letterSpacing: '-0.03em', fontWeight: 800 }}>Archival Sync</h3>
+          <div className="glass-alive animate-pop" style={{ padding: '4rem', background: 'white', borderRadius: '2rem', animationDelay: '0.1s' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '3rem' }}>
+               <Zap size={24} color="#9A0002" fill="currentColor" />
+               <h3 style={{ fontSize: '2rem', color: '#9A0002', fontWeight: 900 }}>Archival Sync</h3>
             </div>
             
-            <p style={{ color: 'rgba(0,0,0,0.5)', marginBottom: '4rem', fontSize: '1.15rem', lineHeight: '1.8', fontWeight: 500 }}>
+            <p style={{ color: 'rgba(26, 26, 26, 0.5)', marginBottom: '4rem', fontSize: '1.1rem', lineHeight: '1.7', fontWeight: 600 }}>
               The Archive Core automatically mirrors every client selection to your studio's Google Drive. Maintain absolute control over your digital assets.
             </p>
 
-            <div style={{ padding: '3rem', background: 'var(--background)', borderRadius: '2rem', border: '1px solid rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '3rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div style={{ padding: '2.5rem', background: '#F9F7F5', borderRadius: '1.5rem', border: '1px solid rgba(154, 0, 2, 0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   {profile?.google_refresh_token ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'black' }}>
-                      <CheckCircle size={24} strokeWidth={3} />
-                      <span style={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', fontSize: '0.8rem' }}>SYNC ENGINE: ONLINE</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#9A0002' }}>
+                      <ShieldCheck size={20} />
+                      <span style={{ fontWeight: 900, letterSpacing: '0.1em', fontSize: '0.8rem' }}>VAULT SYNC: ACTIVE</span>
                     </div>
                   ) : (
-                    <span style={{ color: 'rgba(0,0,0,0.2)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em' }}>VAULT CONNECTION REQUIRED</span>
+                    <span style={{ color: 'rgba(26, 26, 26, 0.3)', fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em' }}>VAULT CONNECTION REQUIRED</span>
                   )}
                 </div>
                 
@@ -231,15 +228,16 @@ function SettingsContent() {
                   type="button" 
                   onClick={connectGoogle}
                   className="btn-secondary"
-                  style={{ padding: '1rem 2.5rem', fontSize: '0.85rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}
                 >
+                  <ExternalLink size={18} />
                   {profile?.google_refresh_token ? 'REFRESH VAULT LINK' : 'CONNECT ARCHIVE'}
                 </button>
               </div>
 
               {profile?.google_refresh_token && (
-                <div style={{ borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '2.5rem', marginTop: '2.5rem', fontSize: '0.95rem', color: 'rgba(0,0,0,0.3)', lineHeight: 1.8, fontWeight: 500 }}>
-                  Your studio vault is securely linked with high-frequency synchronization. We recommend re-authenticating every 90 days to ensure peak transmission security.
+                <div style={{ borderTop: '1px solid rgba(154, 0, 2, 0.05)', paddingTop: '2rem', marginTop: '2rem', fontSize: '0.9rem', color: 'rgba(26, 26, 26, 0.4)', lineHeight: 1.6, fontWeight: 500 }}>
+                  Your studio vault is securely linked with high-frequency synchronization. We recommend re-authenticating every 90 days.
                 </div>
               )}
             </div>
@@ -249,9 +247,9 @@ function SettingsContent() {
             type="submit" 
             disabled={saving}
             className="btn-primary" 
-            style={{ padding: '1.75rem', justifyContent: 'center', fontSize: '1.1rem', borderRadius: '2rem' }}
+            style={{ padding: '1.75rem', justifyContent: 'center', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}
           >
-            {saving ? 'COMMITTING BRAND...' : 'COMMIT BRANDING CHANGES'}
+            {saving ? <><Loader2 size={24} className="animate-spin" /> COMMITTING...</> : <><CheckCircle size={24} strokeWidth={3} /> COMMIT BRANDING CHANGES</>}
           </button>
         </form>
       </div>
@@ -261,7 +259,12 @@ function SettingsContent() {
 
 export default function PhotographerSettings() {
   return (
-    <Suspense fallback={<div className="container flex-center" style={{ minHeight: '100vh' }}>Loading Boutique Settings...</div>}>
+    <Suspense fallback={
+      <div className="flex-center" style={{ minHeight: '100vh', gap: '2rem', flexDirection: 'column', background: '#EFE6DE' }}>
+        <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid rgba(154, 0, 2, 0.1)', borderTopColor: '#9A0002', borderRadius: '50%' }}></div>
+        <span style={{ fontWeight: 900, letterSpacing: '0.4em', color: '#9A0002', fontSize: '0.75rem' }}>ACCESSING ATELIER...</span>
+      </div>
+    }>
       <SettingsContent />
     </Suspense>
   );

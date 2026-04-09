@@ -14,7 +14,8 @@ export async function GET(request, { params }) {
         photographer: {
           select: {
             company_name: true,
-            brand_color: true
+            brand_color: true,
+            image: true
           }
         },
         photos: true,
@@ -55,23 +56,34 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // 2. Delete S3 Objects
-    const prefix = `events/${id}/`;
-    const listCommand = new ListObjectsV2Command({
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Prefix: prefix
-    });
-
-    const listedObjects = await s3Client.send(listCommand);
-
-    if (listedObjects.Contents && listedObjects.Contents.length > 0) {
-      const deleteParams = {
+    // 2. Delete S3 Objects with Isolated Path
+    // Paths are now: users/{userId}/events/{id}/
+    const userId = event.photographer_id;
+    const prefix = `users/${userId}/events/${id}/`;
+    
+    // We also delete the legacy path for broad compatibility during transition
+    const legacyPrefix = `events/${id}/`;
+    
+    const deleteFolder = async (folderPrefix) => {
+      const listCommand = new ListObjectsV2Command({
         Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Delete: { Objects: listedObjects.Contents.map(({ Key }) => ({ Key })) }
-      };
-      await s3Client.send(new DeleteObjectsCommand(deleteParams));
-      console.log(`Purged ${listedObjects.Contents.length} files from S3 for event ${id}`);
-    }
+        Prefix: folderPrefix
+      });
+
+      const listedObjects = await s3Client.send(listCommand);
+
+      if (listedObjects.Contents && listedObjects.Contents.length > 0) {
+        const deleteParams = {
+          Bucket: process.env.AWS_S3_BUCKET_NAME,
+          Delete: { Objects: listedObjects.Contents.map(({ Key }) => ({ Key })) }
+        };
+        await s3Client.send(new DeleteObjectsCommand(deleteParams));
+        console.log(`Purged ${listedObjects.Contents.length} files from S3 path ${folderPrefix}`);
+      }
+    };
+
+    await deleteFolder(prefix);
+    await deleteFolder(legacyPrefix);
 
     // 3. Delete Database Record (Cascades to photos/selections in schema)
     await prisma.event.delete({

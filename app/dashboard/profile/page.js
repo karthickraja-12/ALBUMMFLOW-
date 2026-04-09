@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { User, Mail, Building, ShieldCheck, Settings, ArrowLeft } from 'lucide-react';
+import { User, Mail, Building, ShieldCheck, Settings, ArrowLeft, Crown, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ProfilePage() {
@@ -15,7 +15,7 @@ export default function ProfilePage() {
         if (res.ok) {
           const data = await res.json();
           setProfile(data);
-          setUser(data); // In our new schema, User and Profile are the same record
+          setUser(data); 
         }
       } catch (e) {
         console.error("Profile fetch error:", e);
@@ -26,78 +26,76 @@ export default function ProfilePage() {
     getProfile();
   }, []);
 
-  if (loading) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Loading Profile...</div>;
-  if (!profile) return <div className="container flex-center" style={{ minHeight: '60vh' }}>Please sign in to view your profile.</div>;
+  if (loading) return (
+    <div className="flex-center" style={{ minHeight: '100vh', gap: '2rem', flexDirection: 'column', background: '#EFE6DE' }}>
+      <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid rgba(154, 0, 2, 0.1)', borderTopColor: '#9A0002', borderRadius: '50%' }}></div>
+      <span style={{ fontWeight: 900, letterSpacing: '0.4em', color: '#9A0002', fontSize: '0.75rem' }}>IDENTIFYING...</span>
+    </div>
+  );
+
+  if (!profile) return (
+    <div className="flex-center" style={{ minHeight: '100vh', flexDirection: 'column', gap: '2rem', background: '#EFE6DE' }}>
+       <h2 style={{ fontSize: '2rem', color: '#9A0002', fontWeight: 900 }}>Session Expired</h2>
+       <Link href="/login" className="btn-primary">SIGN IN</Link>
+    </div>
+  );
 
   return (
-    <div className="animate-fade" style={{ background: 'hsl(var(--background))', minHeight: '100vh', padding: '4rem 0' }}>
-      <div className="container" style={{ maxWidth: '800px' }}>
+    <div className="animate-fade" style={{ minHeight: '100vh', padding: '6rem 0', background: '#EFE6DE' }}>
+      <div className="container" style={{ maxWidth: '800px', position: 'relative', zIndex: 1 }}>
         
-        <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'hsl(var(--muted))', textDecoration: 'none', marginBottom: '2rem', fontWeight: 600 }}>
-          <ArrowLeft size={16} /> Back to Dashboard
+        <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#9A0002', textDecoration: 'none', marginBottom: '4rem', fontWeight: 900, fontSize: '0.75rem', letterSpacing: '0.2rem' }}>
+          <ArrowLeft size={16} strokeWidth={3} /> RETURN TO CATALOG
         </Link>
 
-        <h1 className="text-gradient" style={{ fontSize: '3rem', marginBottom: '3rem' }}>About Me</h1>
+        <h1 style={{ fontSize: 'clamp(3rem, 7vw, 5rem)', fontWeight: 900, marginBottom: '6rem', letterSpacing: '-0.04em', color: '#9A0002' }}>IDENTITY</h1>
 
-        <div className="glass" style={{ padding: '3rem', position: 'relative', overflow: 'hidden' }}>
-          {/* Accent Glow */}
-          <div style={{ position: 'absolute', top: '-100px', right: '-100px', width: '300px', height: '300px', background: 'hsla(var(--primary), 0.1)', filter: 'blur(80px)', borderRadius: '50%', zIndex: 0 }}></div>
-
+        <div className="glass-alive animate-pop" style={{ padding: '5rem', background: 'white', borderRadius: '2rem', position: 'relative' }}>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '3.5rem', flexWrap: 'wrap' }}>
-              <div className="flex-center" style={{ width: '100px', height: '100px', borderRadius: '30px', background: 'linear-gradient(135deg, hsl(var(--primary)), hsla(var(--primary), 0.7))', color: 'white', fontSize: '2.5rem', fontWeight: 800, boxShadow: '0 20px 40px -10px hsla(var(--primary), 0.4)' }}>
-                {profile?.name ? profile.name[0].toUpperCase() : profile?.email?.[0].toUpperCase()}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', marginBottom: '6rem', flexWrap: 'wrap' }}>
+              <div className="flex-center" style={{ width: '120px', height: '120px', borderRadius: '2.5rem', background: '#9A0002', color: 'white', fontSize: '3rem', fontWeight: 900, boxShadow: '0 20px 40px rgba(154, 0, 2, 0.2)', overflow: 'hidden' }}>
+                {profile?.image ? (
+                  <img src={profile.image} alt="Studio Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '1rem', background: 'white' }} />
+                ) : (
+                  profile?.name ? profile.name[0].toUpperCase() : profile?.email?.[0].toUpperCase()
+                )}
               </div>
               <div>
-                <h2 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>{profile?.name || 'Photographer'}</h2>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                  <span className="glass-pill" style={{ background: 'hsla(var(--primary), 0.1)', color: 'hsl(var(--primary))', fontSize: '0.8rem' }}>
-                    {profile?.role === 'super_admin' ? 'Super Admin' : 'Pro Admin'}
+                <h2 style={{ fontSize: '3rem', fontWeight: 900, marginBottom: '1rem', letterSpacing: '-0.03em', color: '#1a1a1a', lineHeight: 1 }}>{profile?.name || 'Photographer'}</h2>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <span style={{ padding: '0.5rem 1.25rem', background: 'rgba(154, 0, 2, 0.05)', color: '#9A0002', fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.15em', borderRadius: '0.75rem' }}>
+                    {profile?.role === 'super_admin' ? 'GRAND MASTER' : 'STUDIO PRO'}
                   </span>
                   {profile?.is_approved && (
-                    <span className="glass-pill" style={{ background: 'hsla(var(--success), 0.1)', color: 'hsl(var(--success))', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <ShieldCheck size={14} /> Verified Account
+                    <span style={{ padding: '0.5rem 1.25rem', background: '#9A0002', color: 'white', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '0.75rem' }}>
+                      <Crown size={14} fill="currentColor" /> VERIFIED
                     </span>
                   )}
                 </div>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2.5rem' }}>
-              <div style={{ display: 'flex', gap: '1.25rem' }}>
-                <div className="flex-center" style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'hsla(var(--muted), 0.05)', color: 'hsl(var(--muted))', flexShrink: 0 }}>
-                  <Mail size={20} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'hsl(var(--muted))', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '0.4rem' }}>Email Address</label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{profile.email}</p>
+            <div style={{ display: 'grid', gap: '4rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.7rem', color: 'rgba(26, 26, 26, 0.4)', textTransform: 'uppercase', letterSpacing: '0.2rem', fontWeight: 900, marginBottom: '1rem' }}>TRANSMISSION ADDRESS</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                   <Mail size={20} color="#9A0002" />
+                   <p style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1a1a1a' }}>{profile.email.toUpperCase()}</p>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1.25rem' }}>
-                <div className="flex-center" style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'hsla(var(--muted), 0.05)', color: 'hsl(var(--muted))', flexShrink: 0 }}>
-                  <Building size={20} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'hsl(var(--muted))', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '0.4rem' }}>Studio Branding</label>
-                  <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{profile?.company_name || 'Not Set'}</p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '1.25rem' }}>
-                <div className="flex-center" style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'hsla(var(--muted), 0.05)', color: 'hsl(var(--muted))', flexShrink: 0 }}>
-                  <User size={20} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'hsl(var(--muted))', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '0.4rem' }}>Account ID</label>
-                  <p style={{ fontSize: '0.9rem', color: 'hsl(var(--muted))', fontFamily: 'monospace' }}>{profile.id.substring(0, 18)}...</p>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.7rem', color: 'rgba(26, 26, 26, 0.4)', textTransform: 'uppercase', letterSpacing: '0.2rem', fontWeight: 900, marginBottom: '1rem' }}>STUDIO BRANDING</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                   <Building size={20} color="#9A0002" />
+                   <p style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1a1a1a' }}>{profile?.company_name?.toUpperCase() || 'NOT CONFIGURED'}</p>
                 </div>
               </div>
             </div>
 
-            <div style={{ marginTop: '4rem', borderTop: '1px solid hsl(var(--border))', paddingTop: '2.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <Link href="/dashboard/settings" className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Settings size={18} /> Manage Account Settings
+            <div style={{ marginTop: '6rem', borderTop: '1px solid rgba(154, 0, 2, 0.05)', paddingTop: '4rem' }}>
+              <Link href="/dashboard/settings" className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+                <Settings size={20} /> ATELIER PREFERENCES
               </Link>
             </div>
           </div>

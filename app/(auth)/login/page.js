@@ -1,6 +1,6 @@
 "use client";
 import { useState } from 'react';
-import { Camera } from 'lucide-react';
+import { Camera, Sparkles, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 
@@ -36,67 +36,75 @@ export default function Login() {
 
   if (isWelcoming) {
     return (
-      <div className="container flex-center animate-fade" style={{ minHeight: '80vh' }}>
-        <div className="glass" style={{ width: '100%', maxWidth: '500px', padding: '4rem 2rem', textAlign: 'center', border: '1px solid hsla(var(--primary), 0.3)' }}>
-          <div className="animate-pop" style={{ fontSize: '1.5rem', color: 'hsl(var(--primary))', marginBottom: '2rem', display: 'flex', justifyContent: 'center' }}>
-            <Camera size={48} strokeWidth={2.5} />
+      <div className="container flex-center animate-fade" style={{ minHeight: '100vh', background: '#EFE6DE' }}>
+        <div className="glass-alive" style={{ width: '100%', maxWidth: '500px', padding: '5rem 3rem', textAlign: 'center', borderColor: 'rgba(154, 0, 2, 0.2)' }}>
+          <div className="animate-pop" style={{ color: '#9A0002', marginBottom: '2.5rem', display: 'flex', justifyContent: 'center' }}>
+            <Sparkles size={64} />
           </div>
-          <h2 className="animate-pop" style={{ fontSize: '2.5rem', marginBottom: '1rem', animationDelay: '0.1s' }}>
-            Welcome back, <span className="text-gradient" style={{ display: 'block' }}>{userName}</span>
+          <h2 className="animate-pop" style={{ fontSize: '3rem', marginBottom: '1.5rem', fontWeight: 900, color: '#9A0002', letterSpacing: '-0.03em' }}>
+            Welcome, <br />
+            <span style={{ fontStyle: 'italic', fontWeight: 300 }}>{userName.toUpperCase()}</span>
           </h2>
-          <p className="animate-pop" style={{ color: 'var(--text-muted)', fontSize: '1.1rem', fontStyle: 'italic', animationDelay: '0.3s', lineHeight: '1.6' }}>
-            "The camera is an instrument that teaches people how to see without a camera."
+          <p className="animate-pop" style={{ color: 'rgba(26, 26, 26, 0.5)', fontSize: '1.1rem', fontWeight: 500, lineHeight: '1.8' }}>
+            Preparing your studio archive...
           </p>
-          <div style={{ marginTop: '2.5rem', display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-            <div className="loading-dot" style={{ animationDelay: '0s' }}></div>
-            <div className="loading-dot" style={{ animationDelay: '0.1s' }}></div>
-            <div className="loading-dot" style={{ animationDelay: '0.2s' }}></div>
-          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container flex-center animate-fade" style={{ minHeight: '90vh' }}>
-      <div className="glass" style={{ width: '100%', maxWidth: '420px', padding: '4rem 3.5rem', background: 'white', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.05)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <div className="text-signature" style={{ fontSize: '1.25rem', letterSpacing: '0.4em', marginBottom: '1.5rem' }}>ALBUMFLOW</div>
-          <h2 style={{ fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.03em' }}>Welcome Back</h2>
-          <p style={{ color: 'rgba(0,0,0,0.3)', fontSize: '0.9rem', fontWeight: 700, letterSpacing: '0.1em', marginTop: '0.5rem' }}>AUTHENTICATE TO ACCESS YOUR ATELIER</p>
+    <div className="flex-center animate-fade" style={{ minHeight: '100vh', background: '#EFE6DE', padding: '2rem' }}>
+      <style>{`
+        @media (max-width: 480px) {
+          .auth-card { padding: 3.5rem 2rem !important; border-radius: 1.5rem !important; }
+          .auth-title { font-size: 2rem !important; }
+        }
+      `}</style>
+      <div className="glass-alive auth-card" style={{ width: '100%', maxWidth: '460px', padding: '5rem 4rem', borderRadius: '2rem', background: 'white' }}>
+        <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
+          <div style={{ fontSize: '1rem', letterSpacing: '0.6em', marginBottom: '2.5rem', fontWeight: 900, color: '#9A0002' }}>ALBUMFLOW</div>
+          <h2 className="auth-title" style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#9A0002' }}>Studio Access</h2>
+          <div style={{ width: '40px', height: '3px', background: '#9A0002', margin: '1.5rem auto 0', opacity: 0.3 }}></div>
         </div>
 
-        {error && <div style={{ color: 'hsl(var(--danger))', marginBottom: '2rem', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700 }}>{error}</div>}
+        {error && (
+          <div style={{ color: 'white', marginBottom: '2.5rem', textAlign: 'center', fontSize: '0.8rem', fontWeight: 800, background: '#9A0002', padding: '1.25rem', borderRadius: '1rem', letterSpacing: '0.05em' }}>
+            {error.toUpperCase()}
+          </div>
+        )}
         
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.7rem', fontWeight: 900, color: 'rgba(0,0,0,0.3)', letterSpacing: '0.15em' }}>EMAIL ADDRESS</label>
+            <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.75rem', fontWeight: 900, color: 'rgba(26, 26, 26, 0.6)', letterSpacing: '0.2em' }}>IDENTITY</label>
             <input 
               type="email" 
               required 
               className="input-focus"
-              style={{ width: '100%', padding: '1.25rem', borderRadius: '1.25rem', border: '1px solid rgba(0,0,0,0.08)', background: 'var(--background)', color: 'black', fontSize: '1rem', fontWeight: 600 }}
+              style={{ width: '100%', padding: '1.5rem', borderRadius: '1rem', border: '1px solid rgba(154, 0, 2, 0.1)', background: '#F9F7F5', color: '#1a1a1a', fontSize: '1rem', fontWeight: 600 }}
               value={email} onChange={e => setEmail(e.target.value)} 
               placeholder="studio@example.com"
             />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.7rem', fontWeight: 900, color: 'rgba(0,0,0,0.3)', letterSpacing: '0.15em' }}>PASSWORD</label>
+            <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.75rem', fontWeight: 900, color: 'rgba(26, 26, 26, 0.6)', letterSpacing: '0.2em' }}>SECURED KEY</label>
             <input 
               type="password" 
               required 
               className="input-focus"
-              style={{ width: '100%', padding: '1.25rem', borderRadius: '1.25rem', border: '1px solid rgba(0,0,0,0.08)', background: 'var(--background)', color: 'black', fontSize: '1rem', fontWeight: 600 }}
+              style={{ width: '100%', padding: '1.5rem', borderRadius: '1rem', border: '1px solid rgba(154, 0, 2, 0.1)', background: '#F9F7F5', color: '#1a1a1a', fontSize: '1rem', fontWeight: 600 }}
               value={password} onChange={e => setPassword(e.target.value)} 
               placeholder="••••••••"
             />
           </div>
-          <button type="submit" className="btn-primary" style={{ padding: '1.5rem', fontSize: '1rem', marginTop: '1rem' }}>ENTER ATELIER</button>
+          <button type="submit" className="btn-primary" style={{ padding: '1.5rem', fontSize: '0.9rem', marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
+            ENTER ATELIER <ChevronRight size={18} />
+          </button>
         </form>
 
-        <div style={{ marginTop: '2.5rem', textAlign: 'center' }}>
-          <p style={{ fontSize: '0.85rem', color: 'rgba(0,0,0,0.4)', fontWeight: 600 }}>
-            Don't have an account? <Link href="/signup" style={{ color: 'black', fontWeight: 900, textDecoration: 'none', borderBottom: '2px solid rgba(0,0,0,0.1)' }}>SIGN UP</Link>
+        <div style={{ marginTop: '4rem', textAlign: 'center', borderTop: '1px solid rgba(154, 0, 2, 0.05)', paddingTop: '2.5rem' }}>
+          <p style={{ fontSize: '0.9rem', color: 'rgba(26, 26, 26, 0.5)', fontWeight: 600 }}>
+            New to the Roster? <Link href="/signup" style={{ color: '#9A0002', fontWeight: 900, textDecoration: 'none' }}>GET ACCESS</Link>
           </p>
         </div>
       </div>

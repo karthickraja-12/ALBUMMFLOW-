@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, use } from 'react';
-import { UploadCloud, ArrowLeft, Copy } from 'lucide-react';
+import { UploadCloud, ArrowLeft, Copy, Zap, Shield, Sparkles, ChevronLeft, Check, X, FolderOpen } from 'lucide-react';
 import Link from 'next/link';
 
 import imageCompression from 'browser-image-compression';
@@ -19,7 +19,6 @@ export default function EventDashboard({ params }) {
     fetchEventData();
   }, [id]);
 
-  // Queue Processor: Runs when queue has 'waiting' items and process is triggered
   useEffect(() => {
     if (isProcessing) {
       const nextBatch = uploadQueue.filter(item => item.status === 'waiting').slice(0, 3);
@@ -45,7 +44,7 @@ export default function EventDashboard({ params }) {
     if (!confirm("Remove this photo from the selection list?")) return;
     try {
       const res = await fetch(`/api/events/${id}/select`, {
-        method: 'POST', // The select API handles both select and deselect based on state
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ photoId, selected: false, guestName: 'Photographer' })
       });
@@ -63,29 +62,18 @@ export default function EventDashboard({ params }) {
   const handleDownloadRaw = async () => {
     setDownloading(true);
     try {
-      const photoData = finalistPhotos.map(p => ({
-        id: p.id,
-        googleFileId: p.google_file_id,
-        filename: decodeURIComponent(p.url).split('/').pop().split('-').slice(1).join('-')
-      }));
-      
       const res = await fetch(`/api/events/${id}/gdrive/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          photoData, 
-          eventName: event.name 
-        })
+        body: JSON.stringify({ eventName: event.name })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      if (data.links.length === 0) {
-        return alert("Could not match any finalist photos natively in Google Drive.");
-      }
-
       if (data.success) {
-        alert(`🎉 Success! Your favorites have been archived into a separate folder, and the original set has been cleaned up.`);
+        alert(`🎉 Success! ${data.message || 'Selected photos have been archived to your Google Drive Winners folder.'}`);
+      } else {
+        alert("Sync completed but no photos were matched. Please check your Google Drive.");
       }
     } catch (err) {
       console.error(err);
@@ -115,15 +103,12 @@ export default function EventDashboard({ params }) {
     const item = uploadQueue.find(i => i.id === itemId);
     if (!item || item.status !== 'waiting') return;
 
-    // Update status to compressing
     updateQueueItem(itemId, { status: 'compressing' });
 
     try {
-      // 1. Compress
       const options = { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true };
       const compressedFile = await imageCompression(item.file, options);
       
-      // 2. Get Presigned URL from AWS S3
       updateQueueItem(itemId, { status: 'uploading' });
       const presignedRes = await fetch('/api/upload/presigned', {
         method: 'POST',
@@ -135,39 +120,29 @@ export default function EventDashboard({ params }) {
         })
       });
       
-      const { uploadUrl, key, publicUrl } = await presignedRes.json();
+      const { uploadUrl, key, publicUrl, originalUploadUrl, originalKey } = await presignedRes.json();
 
-      // 3. Upload to S3 directly
       const uploadSuccess = await fetch(uploadUrl, {
         method: 'PUT',
         body: compressedFile,
-        headers: { 'Content-Type': item.file.type }
+        headers: { 'Content-Type': 'item.file.type' }
       });
-      
       if (!uploadSuccess.ok) throw new Error("AWS S3 Upload Failed");
 
-      // 4. Syncing to GDrive (Existing logic)
-      updateQueueItem(itemId, { status: 'syncing' });
-      const params = new URLSearchParams({ 
-        filename: item.file.name.replace(/[^a-zA-Z0-9.-]/g, '_'), 
-        mimeType: item.file.type, 
-        eventName: event.name 
-      });
-      const gDriveRes = await fetch(`/api/events/${id}/gdrive/upload?${params.toString()}`, {
-        method: 'POST',
-        body: item.file 
+      const originalUpload = await fetch(originalUploadUrl, {
+        method: 'PUT',
+        body: item.file,
+        headers: { 'Content-Type': 'item.file.type' }
       });
 
-      const googleData = gDriveRes.ok ? await gDriveRes.json() : null;
-
-      // 5. Finalize DB via API (New Prisma endpoint)
+      updateQueueItem(itemId, { status: 'saving' });
       const photoRes = await fetch(`/api/events/${id}/photos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: publicUrl,
           storage_path: key,
-          google_file_id: googleData?.googleFileId
+          original_storage_path: originalUpload.ok ? originalKey : null,
         })
       });
 
@@ -192,7 +167,12 @@ export default function EventDashboard({ params }) {
     setIsProcessing(true);
   };
 
-  if (!event) return <div className="container flex-center" style={{ minHeight: '50vh' }}>Loading...</div>;
+  if (!event) return (
+    <div className="flex-center" style={{ minHeight: '100vh', gap: '2rem', flexDirection: 'column', background: '#EFE6DE' }}>
+      <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid rgba(154, 0, 2, 0.1)', borderTopColor: '#9A0002', borderRadius: '50%' }}></div>
+      <span style={{ fontWeight: 900, letterSpacing: '0.4em', color: '#9A0002', fontSize: '0.75rem' }}>OPENING VAULT...</span>
+    </div>
+  );
 
   const finalistPhotos = photos.filter(p => selections.some(s => s.photo_id === p.id));
   const completedCount = uploadQueue.filter(i => i.status === 'complete').length;
@@ -200,22 +180,32 @@ export default function EventDashboard({ params }) {
   const overallProgress = totalInQueue > 0 ? Math.floor((completedCount / totalInQueue) * 100) : 0;
 
   return (
-    <div className="animate-fade" style={{ background: 'var(--background)', minHeight: '100vh', padding: '6rem 0' }}>
-      <div className="container">
+    <div className="animate-fade" style={{ minHeight: '100vh', padding: '6rem 0', background: '#EFE6DE' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .dash-header { margin-bottom: 4rem !important; }
+          .dash-title { font-size: 3rem !important; }
+          .production-hub { flex-direction: column !important; }
+          .winners-grid, .archival-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important; gap: 1.5rem !important; }
+        }
+        .scroll-hide::-webkit-scrollbar { display: none; }
+      `}</style>
+
+      <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         
-        {/* Editorial Cockpit Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6rem', flexWrap: 'wrap', gap: '2rem' }}>
-          <div>
-            <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(0,0,0,0.3)', textDecoration: 'none', marginBottom: '2.5rem', fontWeight: 900, fontSize: '0.7rem', letterSpacing: '0.2em' }}>
-              <ArrowLeft size={16} strokeWidth={3} /> BACK TO ARCHIVE
+        {/* Editorial Collection Header */}
+        <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8rem', flexWrap: 'wrap', gap: '3rem' }}>
+          <div className="animate-pop">
+            <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#9A0002', textDecoration: 'none', marginBottom: '2.5rem', fontWeight: 900, fontSize: '0.75rem', letterSpacing: '0.2rem' }}>
+              <ArrowLeft size={16} strokeWidth={3} /> RETURN TO CATALOG
             </Link>
-            <h1 className="text-signature" style={{ fontSize: '4.5rem', marginBottom: '1.5rem', letterSpacing: '-0.04em' }}>{event.name}</h1>
-            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-              <div style={{ padding: '0.75rem 1.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 900, background: 'white', color: 'black', border: '1px solid rgba(0,0,0,0.05)', letterSpacing: '0.1em' }}>
+            <h1 className="dash-title" style={{ fontSize: 'clamp(3rem, 7vw, 5rem)', marginBottom: '1.5rem', letterSpacing: '-0.04em', fontWeight: 900, color: '#9A0002', lineHeight: 0.9 }}>{event.name}</h1>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontSize: '0.75rem', fontWeight: 900, letterSpacing: '0.1em', background: 'white', color: '#9A0002', border: '1px solid rgba(154, 0, 2, 0.1)' }}>
                 {selections.length} / {event.max_selections} SELECTIONS
               </div>
               {event.is_finalized && (
-                <div style={{ padding: '0.75rem 1.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 900, background: 'rgba(5, 150, 105, 0.08)', color: '#059669', border: '1px solid rgba(5, 150, 105, 0.1)', letterSpacing: '0.15em' }}>FINALIZED</div>
+                <div style={{ padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontSize: '0.75rem', fontWeight: 900, background: '#9A0002', color: 'white', letterSpacing: '0.1em' }}>ARCHIVE LOCKED</div>
               )}
             </div>
           </div>
@@ -225,169 +215,126 @@ export default function EventDashboard({ params }) {
               navigator.clipboard.writeText(`${window.location.origin}/gallery/${id}`);
               alert("Client link copied to clipboard!");
             }} 
-            className="btn-secondary" 
-            style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '1.25rem 2.5rem', fontSize: '0.85rem' }}
+            className="btn-primary animate-pop" 
+            style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}
           >
-            <Copy size={18} strokeWidth={2.5} /> COPY CLIENT PORTAL LINK
+            <Copy size={18} /> GUEST ACCESS
           </button>
         </div>
 
-        {/* Boutique Production Console (Upload) */}
-        <div className="glass" style={{ padding: '5rem', marginBottom: '8rem', background: 'white', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '3rem', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.04)' }}>
-          <div style={{ display: 'flex', gap: '6rem', flexWrap: 'wrap' }}>
-            {/* Drop Zone */}
-            <div style={{ flex: '1 1 350px', border: '2px dashed rgba(0,0,0,0.05)', borderRadius: '2.5rem', padding: '5rem 2rem', textAlign: 'center', transition: 'all 0.5s ease', background: 'rgba(0,0,0,0.01)' }} 
-                 onMouseOver={e => {
-                   e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)';
-                   e.currentTarget.style.background = 'white';
-                 }}
-                 onMouseOut={e => {
-                   e.currentTarget.style.borderColor = 'rgba(0,0,0,0.05)';
-                   e.currentTarget.style.background = 'rgba(0,0,0,0.01)';
-                 }}>
-               <div className="flex-center" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'black', color: 'white', margin: '0 auto 2.5rem' }}>
-                <UploadCloud size={32} strokeWidth={2.5} />
-              </div>
-              <h3 style={{ fontSize: '2rem', marginBottom: '1rem', letterSpacing: '-0.02em', fontWeight: 800 }}>Production Hub</h3>
-              <p style={{ color: 'rgba(0,0,0,0.3)', fontSize: '1rem', marginBottom: '3.5rem', maxWidth: '280px', margin: '0 auto 3.5rem', fontWeight: 500 }}>Synchronize high-fidelity assets to the archival core.</p>
-              <label className="btn-primary" style={{ cursor: 'pointer', padding: '1rem 3rem', width: 'auto', fontSize: '0.9rem' }}>
-                INDUCT ASSETS
-                <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
-              </label>
+        {/* Editorial Production Hub */}
+        <div className="glass-alive animate-pop production-hub" style={{ padding: '4rem', marginBottom: '8rem', background: 'white', borderRadius: '2rem', display: 'flex', gap: '4rem' }}>
+          {/* Induction Zone */}
+          <div style={{ flex: '1 1 300px', padding: '4rem 2rem', border: '1px dashed rgba(154, 0, 2, 0.2)', borderRadius: '1.5rem', textAlign: 'center' }}>
+             <div className="flex-center" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(154, 0, 2, 0.05)', color: '#9A0002', margin: '0 auto 2.5rem' }}>
+              <UploadCloud size={32} />
             </div>
-
-            {/* Live Status Console */}
-            {uploadQueue.length > 0 && (
-              <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem' }}>
-                  <div>
-                    <h4 style={{ fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.25em', color: 'rgba(0,0,0,0.3)', marginBottom: '0.75rem' }}>
-                      TRANSMISSION LOG {isProcessing && <span className="animate-pulse" style={{ color: 'black' }}>• SYNCING</span>}
-                    </h4>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' }}>{completedCount} / {totalInQueue} IMMUTABLE</span>
-                  </div>
-                  <span style={{ fontSize: '1rem', fontWeight: 900, color: 'rgba(0,0,0,0.2)' }}>{overallProgress}%</span>
-                </div>
-
-                <div style={{ width: '100%', background: 'rgba(0,0,0,0.03)', borderRadius: '999px', height: '12px', overflow: 'hidden', marginBottom: '4rem' }}>
-                  <div style={{ width: `${overallProgress}%`, background: 'black', height: '100%', transition: 'width 0.8s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
-                </div>
-
-                <div style={{ maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingRight: '1rem' }}>
-                  {uploadQueue.slice().reverse().map(item => (
-                    <div key={item.id} style={{ padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', borderRadius: '1.5rem', border: '1px solid rgba(0,0,0,0.03)', boxShadow: '0 4px 10px rgba(0,0,0,0.01)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', overflow: 'hidden' }}>
-                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.status === 'complete' ? 'black' : item.status === 'error' ? 'hsl(var(--danger))' : 'rgba(0,0,0,0.1)' }}></div>
-                        <span style={{ fontSize: '0.95rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '320px' }}>{item.file.name}</span>
-                        <span style={{ fontSize: '0.65rem', color: 'rgba(0,0,0,0.2)', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '0.15em' }}>{item.status}</span>
-                      </div>
-                      
-                      {item.status === 'error' ? (
-                        <button onClick={() => handleRetry(item.id)} className="btn-secondary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.75rem' }}>RETRY</button>
-                      ) : item.status === 'complete' ? (
-                        <span style={{ color: 'black', fontSize: '0.75rem', fontWeight: 900, letterSpacing: '0.15em' }}>INDELIBLE</span>
-                      ) : (
-                        <div className="animate-spin" style={{ width: '18px', height: '18px', border: '2.5px solid rgba(0,0,0,0.05)', borderTopColor: 'black', borderRadius: '50%' }}></div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <h3 style={{ fontSize: '1.75rem', marginBottom: '1rem', fontWeight: 900, color: '#9A0002' }}>Production Console</h3>
+            <p style={{ color: 'rgba(26, 26, 26, 0.4)', fontSize: '1rem', marginBottom: '3rem', fontWeight: 600 }}>Induct raw assets for curation.</p>
+            <label className="btn-primary" style={{ cursor: 'pointer', padding: '1rem 3rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Zap size={18} fill="currentColor" /> START UPLOAD
+              <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+            </label>
           </div>
+
+          {/* Sync Status Overlay */}
+          {uploadQueue.length > 0 && (
+            <div style={{ flex: '2 1 500px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.3em', color: '#9A0002', opacity: 0.4, marginBottom: '0.75rem' }}>TRANSMISSION STATUS</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1a1a1a' }}>{completedCount} / {totalInQueue} ASSETS SYNCED</div>
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#9A0002' }}>{overallProgress}%</div>
+              </div>
+              
+              <div style={{ width: '100%', height: '8px', background: '#F9F7F5', borderRadius: '99px', overflow: 'hidden', marginBottom: '3rem' }}>
+                <div style={{ width: `${overallProgress}%`, height: '100%', background: '#9A0002', transition: 'width 0.4s' }}></div>
+              </div>
+
+              <div className="scroll-hide" style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                 {uploadQueue.slice().reverse().map(item => (
+                   <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem', background: '#F9F7F5', borderRadius: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', overflow: 'hidden' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: item.status === 'complete' ? '#9A0002' : 'rgba(26,26,26,0.1)' }}></div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1a1a1a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '300px' }}>{item.file.name.toUpperCase()}</span>
+                      </div>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#9A0002', opacity: 0.5 }}>{item.status.toUpperCase()}</span>
+                   </div>
+                 ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* High-Fidelity Winners Gallery */}
+        {/* Global Winners Console */}
         {finalistPhotos.length > 0 && (
-          <section className="animate-fade" style={{ marginBottom: '10rem' }}>
-            <div className="glass" style={{ padding: '5rem', border: '1px solid rgba(0,0,0,0.05)', background: 'white', borderRadius: '3.5rem', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.03)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '5rem', flexWrap: 'wrap', gap: '2rem' }}>
-                <div>
-                  <div style={{ letterSpacing: '0.4em', color: 'rgba(0,0,0,0.3)', fontWeight: 900, fontSize: '0.65rem', marginBottom: '1.5rem', textTransform: 'uppercase' }}>CLIENT CURATION</div>
-                  <h2 className="text-signature" style={{ fontSize: '3rem', marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>THE SELECTION</h2>
-                  <p style={{ color: 'rgba(0,0,0,0.4)', fontSize: '1.1rem', fontWeight: 600 }}>Archival-ready assets approved by the client.</p>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '2rem' }}>
-                  <button 
-                    onClick={handleDownloadRaw}
-                    disabled={downloading}
-                    className="btn-primary" 
-                    style={{ background: 'black', color: 'white', padding: '1.25rem 2.5rem' }}
-                  >
-                    {downloading ? 'PROCESSING...' : 'SYNC ARCHIVE TO VAULT'}
-                  </button>
-                  <button 
-                    onClick={() => {
-                      const filenames = finalistPhotos.map(p => {
-                        const parts = p.url.split('/');
-                        const fullName = parts[parts.length - 1]; 
-                        return fullName.split('-').slice(1).join('-'); 
-                      });
-                      navigator.clipboard.writeText(filenames.join(', '));
-                      alert(`Successfully copied ${filenames.length} filenames!`);
-                    }}
-                    className="btn-secondary"
-                    style={{ padding: '1.25rem 2.5rem' }}
-                  >
-                    IDENTIFIER LIST
-                  </button>
-                </div>
-              </div>
+          <section style={{ marginBottom: '10rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '4rem', flexWrap: 'wrap', gap: '2rem' }}>
+               <div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.3em', color: '#9A0002', opacity: 0.4, marginBottom: '1.5rem' }}>GLOBAL SUBMISSIONS</div>
+                  <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: '#9A0002', letterSpacing: '-0.03em' }}>Curated Winners</h2>
+               </div>
+               <button 
+                onClick={handleDownloadRaw}
+                disabled={downloading}
+                className="btn-primary" 
+                style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
+               >
+                 <Shield size={20} /> {downloading ? 'SYNCING ARCHIVE...' : 'EXPORT TO GOOGLE DRIVE'}
+               </button>
+            </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '3rem' }}>
-                {finalistPhotos.map((photo, idx) => {
-                  const selectedBy = selections.filter(s => s.photo_id === photo.id);
-                  return (
-                    <div key={'final-' + photo.id} className="animate-pop" style={{ position: 'relative', aspectRatio: '1', borderRadius: '2rem', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.06)', animationDelay: `${idx * 0.05}s` }}>
-                      <img src={photo.thumbnail_url} alt="Winner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <div className="glass" style={{ position: 'absolute', bottom: 16, left: 16, right: 16, color: 'black', padding: '0.75rem 1rem', borderRadius: '1.25rem', fontSize: '0.75rem', fontWeight: 900, textAlign: 'center', background: 'white', border: '1px solid rgba(0,0,0,0.05)', letterSpacing: '0.05em' }}>
+            <div className="winners-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '3rem' }}>
+               {finalistPhotos.map((photo, idx) => {
+                 const selectedBy = selections.filter(s => s.photo_id === photo.id);
+                 return (
+                   <div key={'final-' + photo.id} className="animate-pop glass-alive" style={{ position: 'relative', aspectRatio: '1', borderRadius: '1.5rem', overflow: 'hidden', background: 'white', animationDelay: `${idx * 0.05}s` }}>
+                      <img src={photo.url} alt="Winner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', bottom: '1.25rem', left: '1.25rem', right: '1.25rem', padding: '0.75rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', textAlign: 'center', fontSize: '0.65rem', fontWeight: 900, color: '#9A0002', border: '1px solid rgba(154, 0, 2, 0.1)' }}>
                         {selectedBy.map(s => s.user_name.toUpperCase()).join(' • ')}
                       </div>
-                      
-                      {/* REVOKE BUTTON */}
                       <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRevokeSelection(photo.id);
-                        }}
-                        style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.9)', color: 'hsl(var(--danger))', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1rem', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}
-                        title="Remove from Selection"
+                        onClick={(e) => { e.stopPropagation(); handleRevokeSelection(photo.id); }}
+                        style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'white', color: '#9A0002', border: '1px solid rgba(154, 0, 2, 0.1)', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
-                        ×
+                        <X size={16} />
                       </button>
-                    </div>
-                  );
-                })}
-              </div>
+                   </div>
+                 );
+               })}
             </div>
           </section>
         )}
 
-        {/* Global Asset Library */}
+        {/* Archival Collection Library */}
         <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5rem' }}>
-             <h2 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.04em' }}>Archival Library</h2>
-             <div className="glass-pill" style={{ background: 'white', color: 'rgba(0,0,0,0.3)', border: '1px solid rgba(0,0,0,0.05)', fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.1em' }}>
-               PORTAL: {`${window.location.origin}/gallery/${id}`}
-             </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem' }}>
+              <h2 style={{ fontSize: '2rem', fontWeight: 900, color: '#9A0002', letterSpacing: '-0.02em' }}>Archival Library</h2>
+              <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'rgba(26, 26, 26, 0.3)', letterSpacing: '0.1em' }}>{photos.length} TOTAL ASSETS</div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '4rem' }}>
-            {photos.map((photo) => {
-              const selectedBy = selections.filter(s => s.photo_id === photo.id);
-              return (
-                <div key={photo.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: '2.5rem', overflow: 'hidden', background: 'white', boxShadow: '0 15px 40px rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.03)' }}>
-                  <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  {selectedBy.length > 0 && (
-                    <div className="flex-center animate-pop" style={{ position: 'absolute', top: 24, right: 24, background: 'black', color: 'white', padding: '0.75rem 1.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 900, boxShadow: '0 20px 40px rgba(0,0,0,0.2)', letterSpacing: '0.05em' }}>
-                      {selectedBy.length} {selectedBy.length === 1 ? 'SELECTION' : 'SELECTIONS'}
-                    </div>
-                  )}
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(to top, rgba(0,0,0,0.02) 0%, transparent 100%)', pointerEvents: 'none' }}></div>
-                </div>
-              );
-            })}
+          <div className="archival-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '3rem' }}>
+             {photos.map((photo) => {
+               const selectedBy = selections.filter(s => s.photo_id === photo.id);
+               return (
+                 <div key={photo.id} className="glass-alive" style={{ position: 'relative', aspectRatio: '1', borderRadius: '2rem', overflow: 'hidden', background: 'white' }}>
+                    <img src={photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }} />
+                    {selectedBy.length > 0 && (
+                      <div className="flex-center animate-pop" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: '#9A0002', color: 'white', padding: '0.6rem 1.25rem', borderRadius: '0.75rem', fontSize: '0.7rem', fontWeight: 900, boxShadow: '0 10px 20px rgba(154, 0, 2, 0.2)' }}>
+                        SELECTED
+                      </div>
+                    )}
+                 </div>
+               );
+             })}
+
+             {photos.length === 0 && (
+               <div className="flex-center" style={{ gridColumn: '1 / -1', padding: '10rem 2rem', background: 'white', borderRadius: '2rem', border: '1px dashed rgba(154, 0, 2, 0.1)', flexDirection: 'column', gap: '2rem' }}>
+                  <FolderOpen size={48} color="rgba(154, 0, 2, 0.2)" />
+                  <p style={{ color: 'rgba(26, 26, 26, 0.3)', fontWeight: 800 }}>Library is currently empty.</p>
+               </div>
+             )}
           </div>
         </section>
       </div>

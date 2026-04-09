@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ChevronRight, Sparkles } from "lucide-react";
 
 export default function SignUp() {
   const router = useRouter();
@@ -39,46 +40,62 @@ export default function SignUp() {
   };
 
   return (
-    <div className="container flex-center animate-fade" style={{ minHeight: '90vh' }}>
-      <div className="glass" style={{ width: '100%', maxWidth: '420px', padding: '4rem 3.5rem', background: 'white', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.05)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <div className="text-signature" style={{ fontSize: '1.25rem', letterSpacing: '0.4em', marginBottom: '1.5rem' }}>ALBUMFLOW</div>
-          <h2 style={{ fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.03em' }}>Join the Atelier</h2>
-          <p style={{ color: 'rgba(0,0,0,0.3)', fontSize: '0.9rem', fontWeight: 700, letterSpacing: '0.1em', marginTop: '0.5rem' }}>COMMENCE YOUR CURATION JOURNEY</p>
+    <div className="flex-center animate-fade" style={{ minHeight: '100vh', background: '#EFE6DE', padding: '2rem' }}>
+      <style>{`
+        @media (max-width: 480px) {
+          .auth-card { padding: 3.5rem 2rem !important; border-radius: 1.5rem !important; }
+          .auth-title { font-size: 2rem !important; }
+        }
+      `}</style>
+      <div className="glass-alive auth-card" style={{ width: '100%', maxWidth: '460px', padding: '5rem 4rem', borderRadius: '2rem', background: 'white' }}>
+        <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
+          <div style={{ fontSize: '1rem', letterSpacing: '0.6em', marginBottom: '2.5rem', fontWeight: 900, color: '#9A0002' }}>ALBUMFLOW</div>
+          <h2 className="auth-title" style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#9A0002' }}>Join the Roster</h2>
+          <div style={{ width: '40px', height: '3px', background: '#9A0002', margin: '1.5rem auto 0', opacity: 0.3 }}></div>
         </div>
 
-        {error && <div style={{ color: 'hsl(var(--danger))', marginBottom: '2rem', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700 }}>{error}</div>}
-        {success && <div style={{ color: 'hsl(var(--primary))', marginBottom: '2rem', textAlign: 'center', fontSize: '0.85rem', fontWeight: 700 }}>{success}</div>}
+        {error && (
+          <div style={{ color: 'white', marginBottom: '2.5rem', textAlign: 'center', fontSize: '0.8rem', fontWeight: 800, background: '#9A0002', padding: '1.25rem', borderRadius: '1rem' }}>
+            {error.toUpperCase()}
+          </div>
+        )}
+        {success && (
+          <div style={{ color: '#059669', marginBottom: '2.5rem', textAlign: 'center', fontSize: '0.8rem', fontWeight: 800, background: 'rgba(5, 150, 105, 0.1)', padding: '1.25rem', borderRadius: '1rem' }}>
+            {success.toUpperCase()}
+          </div>
+        )}
         
-        <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.7rem', fontWeight: 900, color: 'rgba(0,0,0,0.3)', letterSpacing: '0.15em' }}>EMAIL ADDRESS</label>
+            <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.75rem', fontWeight: 900, color: 'rgba(26, 26, 26, 0.6)', letterSpacing: '0.2em' }}>IDENTITY</label>
             <input 
               type="email" 
               required 
               className="input-focus"
-              style={{ width: '100%', padding: '1.25rem', borderRadius: '1.25rem', border: '1px solid rgba(0,0,0,0.08)', background: 'var(--background)', color: 'black', fontSize: '1rem', fontWeight: 600 }}
+              style={{ width: '100%', padding: '1.5rem', borderRadius: '1rem', border: '1px solid rgba(154, 0, 2, 0.1)', background: '#F9F7F5', color: '#1a1a1a', fontSize: '1rem', fontWeight: 600 }}
               value={email} onChange={e => setEmail(e.target.value)} 
               placeholder="studio@example.com"
             />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.7rem', fontWeight: 900, color: 'rgba(0,0,0,0.3)', letterSpacing: '0.15em' }}>PASSWORD</label>
+            <label style={{ display: 'block', marginBottom: '1rem', fontSize: '0.75rem', fontWeight: 900, color: 'rgba(26, 26, 26, 0.6)', letterSpacing: '0.2em' }}>SECURED KEY</label>
             <input 
               type="password" 
               required 
               className="input-focus"
-              style={{ width: '100%', padding: '1.25rem', borderRadius: '1.25rem', border: '1px solid rgba(0,0,0,0.08)', background: 'var(--background)', color: 'black', fontSize: '1rem', fontWeight: 600 }}
+              style={{ width: '100%', padding: '1.5rem', borderRadius: '1rem', border: '1px solid rgba(154, 0, 2, 0.1)', background: '#F9F7F5', color: '#1a1a1a', fontSize: '1rem', fontWeight: 600 }}
               value={password} onChange={e => setPassword(e.target.value)} 
               placeholder="••••••••"
             />
           </div>
-          <button type="submit" className="btn-primary" style={{ padding: '1.5rem', fontSize: '1rem', marginTop: '1rem' }}>CREATE ATELIER</button>
+          <button type="submit" disabled={loading} className="btn-primary" style={{ padding: '1.5rem', fontSize: '0.9rem', marginTop: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
+            {loading ? 'INITIALIZING...' : 'CREATE ATELIER'} {!loading && <Sparkles size={18} />}
+          </button>
         </form>
 
-        <div style={{ marginTop: '2.5rem', textAlign: 'center' }}>
-          <p style={{ fontSize: '0.85rem', color: 'rgba(0,0,0,0.4)', fontWeight: 600 }}>
-            Already have an account? <Link href="/login" style={{ color: 'black', fontWeight: 900, textDecoration: 'none', borderBottom: '2px solid rgba(0,0,0,0.1)' }}>SIGN IN</Link>
+        <div style={{ marginTop: '4rem', textAlign: 'center', borderTop: '1px solid rgba(154, 0, 2, 0.05)', paddingTop: '2.5rem' }}>
+          <p style={{ fontSize: '0.9rem', color: 'rgba(26, 26, 26, 0.5)', fontWeight: 600 }}>
+            Already on the Roster? <Link href="/login" style={{ color: '#9A0002', fontWeight: 900, textDecoration: 'none' }}>SIGN IN</Link>
           </p>
         </div>
       </div>
