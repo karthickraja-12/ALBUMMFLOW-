@@ -60,6 +60,11 @@ export default function Navbar() {
                 <Link href="/dashboard/settings" style={{ textDecoration: 'none', color: pathname.includes('settings') ? '#9A0002' : 'rgba(26,26,26,0.4)', fontWeight: 800, fontSize: '0.75rem', letterSpacing: '0.1em' }}>
                   BRANDING
                 </Link>
+                {user.role === 'super_admin' && (
+                  <Link href="/admin" style={{ textDecoration: 'none', color: pathname.startsWith('/admin') ? '#9A0002' : 'rgba(26,26,26,0.4)', fontWeight: 800, fontSize: '0.75rem', letterSpacing: '0.1em' }}>
+                    ADMIN
+                  </Link>
+                )}
               </>
             )}
           </div>
@@ -108,6 +113,9 @@ export default function Navbar() {
             <>
               <Link href="/dashboard" style={{ textDecoration: 'none', color: '#9A0002', fontWeight: 900, fontSize: '0.9rem', letterSpacing: '0.2em' }}>CATALOG</Link>
               <Link href="/dashboard/settings" style={{ textDecoration: 'none', color: '#9A0002', fontWeight: 900, fontSize: '0.9rem', letterSpacing: '0.2em' }}>BRANDING</Link>
+              {user.role === 'super_admin' && (
+                <Link href="/admin" style={{ textDecoration: 'none', color: '#9A0002', fontWeight: 900, fontSize: '0.9rem', letterSpacing: '0.2em' }}>ADMIN</Link>
+              )}
               <Link href="/dashboard/profile" style={{ textDecoration: 'none', color: '#9A0002', fontWeight: 900, fontSize: '0.9rem', letterSpacing: '0.2em' }}>MY STUDIO</Link>
               <div style={{ height: '1px', background: 'rgba(154, 0, 2, 0.1)', margin: '1rem 0' }}></div>
               <button onClick={handleLogout} style={{ background: '#9A0002', color: 'white', border: 'none', padding: '1.25rem', borderRadius: '1rem', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer' }}>SIGN OUT</button>
