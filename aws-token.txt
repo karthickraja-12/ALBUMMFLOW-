@@ -1,0 +1,1 @@
+﻿database-2.cluster-cwdami2kk3zg.us-east-1.rds.amazonaws.com:5432/?Action=connect&DBUser=postgres&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA4BZJT2X3O3JYBYWD%2F20260407%2Fus-east-1%2Frds-db%2Faws4_request&X-Amz-Date=20260407T202821Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=1503dc7371f5a185f481f377617956b91d5502da7ea9205361375b09f9684aa4

@@ -1,0 +1,5 @@
+﻿{
+    "UserId": "AIDA4BZJT2X3LF2CYZGRV",
+    "Account": "828479100406",
+    "Arn": "arn:aws:iam::828479100406:user/aiwork"
+}

@@ -1,0 +1,7 @@
+﻿node : Conn Error: authentication failed for user "postgres": invalid authentication method
+At line:1 char:1
++ node reset-db.js 2>&1 | Out-File -Encoding utf8 reset-db-out.txt
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Conn Error: aut...tication method:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

@@ -1,0 +1,9 @@
+﻿node : Connection error details:
+At line:1 char:1
++ node test-db.js 2>&1 | Out-File -Encoding utf8 test-db-out.txt
++ ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Connection error details::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Message: PAM authentication failed for user "postgres"
+Code: 28P01

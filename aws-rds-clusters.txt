@@ -1,0 +1,7 @@
+﻿[
+    [
+        "database-2",
+        "database-2.cluster-cwdami2kk3zg.us-east-1.rds.amazonaws.com",
+        "postgres"
+    ]
+]

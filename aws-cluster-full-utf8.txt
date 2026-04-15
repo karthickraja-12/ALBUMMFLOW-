@@ -1,0 +1,64 @@
+﻿{
+    "DBClusters": [
+        {
+            "AllocatedStorage": 1,
+            "AvailabilityZones": [
+                "us-east-1d",
+                "us-east-1c",
+                "us-east-1b"
+            ],
+            "BackupRetentionPeriod": 1,
+            "DBClusterIdentifier": "database-2",
+            "DBClusterParameterGroup": "default.aurora-postgresql17",
+            "Status": "available",
+            "EarliestRestorableTime": "2026-04-06T09:01:17.823000+00:00",
+            "Endpoint": "database-2.cluster-cwdami2kk3zg.us-east-1.rds.amazonaws.com",
+            "ReaderEndpoint": "database-2.cluster-ro-cwdami2kk3zg.us-east-1.rds.amazonaws.com",
+            "MultiAZ": false,
+            "Engine": "aurora-postgresql",
+            "EngineVersion": "17.7",
+            "LatestRestorableTime": "2026-04-07T20:23:37.410000+00:00",
+            "Port": 5432,
+            "MasterUsername": "postgres",
+            "PreferredBackupWindow": "08:57-09:27",
+            "PreferredMaintenanceWindow": "tue:06:06-tue:06:36",
+            "UpgradeRolloutOrder": "second",
+            "ReadReplicaIdentifiers": [],
+            "DBClusterMembers": [
+                {
+                    "DBInstanceIdentifier": "database-2-instance-1",
+                    "IsClusterWriter": true,
+                    "DBClusterParameterGroupStatus": "in-sync",
+                    "PromotionTier": 1
+                }
+            ],
+            "VpcSecurityGroups": [],
+            "HostedZoneId": "Z2R2ITUGPM61AM",
+            "StorageEncrypted": false,
+            "DbClusterResourceId": "cluster-GFKS6D4WOWH3SEG5F6KVTNXLYM",
+            "DBClusterArn": "arn:aws:rds:us-east-1:828479100406:cluster:database-2",
+            "AssociatedRoles": [],
+            "IAMDatabaseAuthenticationEnabled": true,
+            "ClusterCreateTime": "2026-04-06T07:47:05.499000+00:00",
+            "EngineMode": "provisioned",
+            "AutoMinorVersionUpgrade": true,
+            "DeletionProtection": false,
+            "HttpEndpointEnabled": false,
+            "ActivityStreamStatus": "stopped",
+            "CopyTagsToSnapshot": false,
+            "CrossAccountClone": false,
+            "DomainMemberships": [],
+            "TagList": [],
+            "ServerlessV2ScalingConfiguration": {
+                "MinCapacity": 0.0,
+                "MaxCapacity": 16.0,
+                "SecondsUntilAutoPause": 300
+            },
+            "ServerlessV2PlatformVersion": "4",
+            "DatabaseInsightsMode": "standard",
+            "PerformanceInsightsEnabled": false,
+            "LocalWriteForwardingStatus": "disabled",
+            "EngineLifecycleSupport": "open-source-rds-extended-support"
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+﻿Revoked rds_iam from postgres successfully!
