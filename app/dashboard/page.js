@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Plus, Image as ImageIcon, Trash2, Zap, LayoutGrid, Sparkles, FolderOpen, ChevronRight } from 'lucide-react';
+import { Plus, Image as ImageIcon, Trash2, Zap, LayoutGrid, Sparkles, FolderOpen, ChevronRight, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [profile, setProfile] = useState(null);
+  const [storage, setStorage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newEvent, setNewEvent] = useState({ name: '', max_selections: 9999 });
@@ -26,6 +27,12 @@ export default function Dashboard() {
       if (profileRes.ok) {
         const p = await profileRes.json();
         setProfile(p);
+      }
+
+      const storageRes = await fetch('/api/profile/storage');
+      if (storageRes.ok) {
+        const s = await storageRes.json();
+        setStorage(s);
       }
     } catch (e) {
       console.error("Dashboard fetch error:", e);
@@ -65,9 +72,10 @@ export default function Dashboard() {
     <div className="animate-fade" style={{ minHeight: '100vh', padding: '6rem 0', background: '#EFE6DE' }}>
       <style>{`
         @media (max-width: 768px) {
-          .dash-header { margin-bottom: 4rem !important; }
+          .dash-header { margin-bottom: 4rem !important; flex-direction: column !important; align-items: flex-start !important; gap: 3rem; }
           .dash-title { font-size: 3.5rem !important; }
           .coll-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+          .storage-meter { width: 100% !important; margin-top: 2rem; }
         }
       `}</style>
       
@@ -82,13 +90,43 @@ export default function Dashboard() {
               Precision management for the {profile?.company_name || 'Studio'} archives.
             </p>
           </div>
-          <button 
-            onClick={() => setIsCreating(true)} 
-            className="btn-primary animate-pop"
-            style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
-          >
-            <Plus size={20} /> NEW COLLECTION
-          </button>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2rem' }}>
+             {/* Storage Meter UI */}
+             {storage && (
+               <div className="storage-meter animate-pop" style={{ width: '300px', background: 'rgba(154, 0, 2, 0.03)', padding: '1.5rem', borderRadius: '1.25rem', border: '1px solid rgba(154, 0, 2, 0.08)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 900, fontSize: '0.65rem', color: '#9A0002', letterSpacing: '0.1em' }}>
+                      <BarChart3 size={14} /> STORAGE
+                    </div>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'rgba(26, 26, 26, 0.4)' }}>
+                      {storage.percentage}% USED
+                    </div>
+                  </div>
+                  <div style={{ height: '6px', background: 'rgba(154, 0, 2, 0.1)', borderRadius: '3px', overflow: 'hidden', marginBottom: '0.75rem' }}>
+                    <div style={{ 
+                      height: '100%', 
+                      width: `${storage.percentage}%`, 
+                      background: '#9A0002', 
+                      borderRadius: '3px',
+                      transition: 'width 1s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                    }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(26, 26, 26, 0.6)' }}>
+                    <span>{storage.readableUsed}</span>
+                    <span style={{ opacity: 0.4 }}>{storage.readableLimit} limit</span>
+                  </div>
+               </div>
+             )}
+
+            <button 
+              onClick={() => setIsCreating(true)} 
+              className="btn-primary animate-pop"
+              style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: 'fit-content' }}
+            >
+              <Plus size={20} /> NEW COLLECTION
+            </button>
+          </div>
         </div>
 
         {/* Editorial Create Form */}
