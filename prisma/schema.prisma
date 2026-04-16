@@ -66,6 +66,10 @@ model User {
   brand_color   String?
   password      String?    // Hashed password for Credentials provider
   
+  // Subscription & Quota Tracking
+  subscription_plan  String    @default("pro") // "pro" or "elite"
+  storage_used       BigInt    @default(0)     // Total bytes used in S3
+  
   // Google Drive Archival Vault (migrated from 'profiles')
   google_refresh_token String? @db.Text
   google_access_token  String? @db.Text
@@ -102,6 +106,7 @@ model Photo {
   storage_path            String       // Compressed S3 path
   original_storage_path   String?      // Original full-size S3 path (temporary, deleted after sync)
   google_file_id          String?      // Google Drive File ID
+  size                    Int          @default(0)  // Size in bytes
   created_at              DateTime     @default(now())
   
   // Relationships

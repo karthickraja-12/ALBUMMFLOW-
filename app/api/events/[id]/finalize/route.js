@@ -30,7 +30,11 @@ export async function POST(request, { params }) {
         event_id: id,
         original_storage_path: { not: null }
       },
-      include: {
+      select: {
+        id: true,
+        original_storage_path: true,
+        size: true,
+        google_file_id: true,
         selections: {
           take: 1
         }
@@ -48,6 +52,7 @@ export async function POST(request, { params }) {
     });
 
     const keysToDelete = toDelete.map(p => p.original_storage_path);
+    const totalSizeToFree = toDelete.reduce((acc, p) => acc + (p.size || 0), 0);
     let deletedCount = 0;
 
     // 3. Perform Batch Cleanup in S3 & Database (Chunked in 1000s)
@@ -60,10 +65,19 @@ export async function POST(request, { params }) {
           await deleteObjects(chunk);
         }
         
-        await prisma.photo.updateMany({
-          where: { id: { in: toDelete.map(p => p.id) } },
-          data: { original_storage_path: null }
-        });
+        // Transaction: Clear original paths and decrement total user storage usage
+        await prisma.$transaction([
+          prisma.photo.updateMany({
+            where: { id: { in: toDelete.map(p => p.id) } },
+            data: { original_storage_path: null }
+          }),
+          prisma.user.update({
+            where: { id: session.user.id },
+            data: {
+              storage_used: { decrement: totalSizeToFree }
+            }
+          })
+        ]);
         
         deletedCount = keysToDelete.length;
       } catch (s3Error) {
