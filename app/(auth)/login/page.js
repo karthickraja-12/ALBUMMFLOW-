@@ -102,6 +102,36 @@ export default function Login() {
           </button>
         </form>
 
+        <div style={{ margin: '2.5rem 0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(154, 0, 2, 0.1)' }}></div>
+          <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'rgba(26, 26, 26, 0.3)', letterSpacing: '0.2em' }}>OR</span>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(154, 0, 2, 0.1)' }}></div>
+        </div>
+
+        <button 
+          onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+          className="glass-alive"
+          style={{ 
+            width: '100%', 
+            padding: '1.25rem', 
+            borderRadius: '1rem', 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            gap: '1rem', 
+            border: '1px solid rgba(154, 0, 2, 0.1)',
+            background: 'white',
+            color: '#1a1a1a',
+            fontSize: '0.9rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '18px' }} />
+          CONTINUE WITH GOOGLE
+        </button>
+
         <div style={{ marginTop: '4rem', textAlign: 'center', borderTop: '1px solid rgba(154, 0, 2, 0.05)', paddingTop: '2.5rem' }}>
           <p style={{ fontSize: '0.9rem', color: 'rgba(26, 26, 26, 0.5)', fontWeight: 600 }}>
             New to the Roster? <Link href="/signup" style={{ color: '#9A0002', fontWeight: 900, textDecoration: 'none' }}>GET ACCESS</Link>
