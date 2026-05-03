@@ -19,9 +19,17 @@ export async function GET() {
     const users = await prisma.user.findMany({
       orderBy: { created_at: "desc" }
     });
-    return NextResponse.json(users);
+    
+    // Serialize BigInt fields for JSON response
+    const serializedUsers = users.map(user => ({
+      ...user,
+      storage_used: user.storage_used.toString()
+    }));
+    
+    return NextResponse.json(serializedUsers);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: error.message === "Unauthorized" ? 403 : 500 });
+    console.error("[GET /api/admin/users] Error:", error.message, error.code ?? "");
+    return NextResponse.json({ error: error.message === "Unauthorized" ? "Unauthorized" : "An unexpected error occurred while fetching users." }, { status: error.message === "Unauthorized" ? 403 : 500 });
   }
 }
 
@@ -37,6 +45,7 @@ export async function PATCH(request) {
 
     return NextResponse.json(updatedUser);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: error.message === "Unauthorized" ? 403 : 500 });
+    console.error("[PATCH /api/admin/users] Error:", error.message, error.code ?? "");
+    return NextResponse.json({ error: error.message === "Unauthorized" ? "Unauthorized" : "An unexpected error occurred while updating the user." }, { status: error.message === "Unauthorized" ? 403 : 500 });
   }
 }

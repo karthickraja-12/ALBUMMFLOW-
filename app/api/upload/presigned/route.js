@@ -3,6 +3,9 @@ import { auth } from "@/lib/auth";
 import { getPresignedUploadUrl } from "@/lib/s3";
 import { v4 as uuidv4 } from "uuid";
 import prisma from "@/lib/prisma";
+import { presignedUrlSchema } from "@/lib/validations";
+
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic"];
 
 export async function POST(request) {
   const session = await auth();
@@ -11,10 +14,17 @@ export async function POST(request) {
   }
 
   try {
-    const { filename, contentType, eventId } = await request.json();
+    const body = await request.json();
+    const parsed = presignedUrlSchema.safeParse(body);
+    
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
+    }
 
-    if (!filename || !contentType || !eventId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    const { filename, contentType, eventId } = parsed.data;
+
+    if (!ALLOWED_MIME_TYPES.includes(contentType)) {
+      return NextResponse.json({ error: "Invalid file type. Only images (JPEG, PNG, WEBP, HEIC) are allowed." }, { status: 400 });
     }
 
     // 1. Verify that the event belongs to this photographer (User Isolation Check)
@@ -59,7 +69,7 @@ export async function POST(request) {
       originalKey,
     });
   } catch (error) {
-    console.error("Presigned URL Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[POST /api/upload/presigned] Error:", error);
+    return NextResponse.json({ error: "An unexpected error occurred while generating the upload URL." }, { status: 500 });
   }
 }

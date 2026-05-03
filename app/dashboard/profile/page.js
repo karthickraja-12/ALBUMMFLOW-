@@ -11,7 +11,7 @@ export default function ProfilePage() {
   useEffect(() => {
     async function getProfile() {
       try {
-        const res = await fetch('/api/profile');
+        const res = await fetch('/api/profile', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           setProfile(data);

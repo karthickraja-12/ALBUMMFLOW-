@@ -13,9 +13,15 @@ export async function GET() {
       where: { id: session.user.id }
     });
 
-    return NextResponse.json(user);
+    const serializedUser = user ? {
+      ...user,
+      storage_used: user.storage_used?.toString()
+    } : null;
+
+    return NextResponse.json(serializedUser);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[GET /api/profile] Error:", error);
+    return NextResponse.json({ error: "An unexpected error occurred while fetching the profile." }, { status: 500 });
   }
 }
 
@@ -38,8 +44,14 @@ export async function PATCH(request) {
       }
     });
 
-    return NextResponse.json(updatedUser);
+    const serializedUpdatedUser = updatedUser ? {
+      ...updatedUser,
+      storage_used: updatedUser.storage_used?.toString()
+    } : null;
+
+    return NextResponse.json(serializedUpdatedUser);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[PATCH /api/profile] Error:", error);
+    return NextResponse.json({ error: "An unexpected error occurred while updating the profile." }, { status: 500 });
   }
 }

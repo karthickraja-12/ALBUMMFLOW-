@@ -29,6 +29,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -37,6 +38,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -97,6 +100,8 @@ model Event {
   photographer    User        @relation(fields: [photographer_id], references: [id], onDelete: Cascade)
   photos          Photo[]
   selections      Selection[]
+
+  @@index([photographer_id])
 }
 
 model Photo {
@@ -112,6 +117,8 @@ model Photo {
   // Relationships
   event        Event        @relation(fields: [event_id], references: [id], onDelete: Cascade)
   selections   Selection[]
+
+  @@index([event_id])
 }
 
 model Selection {
@@ -126,6 +133,8 @@ model Selection {
   photo      Photo    @relation(fields: [photo_id], references: [id], onDelete: Cascade)
 
   @@unique([event_id, photo_id, user_name]) // A guest can only select a specific photo once
+  @@index([event_id])
+  @@index([photo_id])
 }
 
 model MonitoringLog {
@@ -138,4 +147,6 @@ model MonitoringLog {
   created_at DateTime @default(now())
   
   user       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
 }
