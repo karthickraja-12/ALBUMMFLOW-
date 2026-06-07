@@ -47,23 +47,17 @@ export default function Navbar() {
         {/* Left Section: Logo & Desktop Links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
-            {isHome ? (
-              <img 
-                src="/logo.png" 
-                alt="iColors Logo" 
-                style={{ 
-                  height: '42px', 
-                  width: 'auto', 
-                  mixBlendMode: 'multiply',
-                  borderRadius: '10px',
-                  filter: 'brightness(1.4) contrast(1.2)'
-                }} 
-              />
-            ) : (
-              <span style={{ color: '#9A0002', fontWeight: 900, fontSize: '0.9rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                icolors@software
-              </span>
-            )}
+            <img 
+              src="/logo.png" 
+              alt="iColors Logo" 
+              style={{ 
+                height: '42px', 
+                width: 'auto', 
+                mixBlendMode: 'multiply',
+                borderRadius: '10px',
+                filter: 'brightness(1.4) contrast(1.2)'
+              }} 
+            />
           </Link>
           
           <div className="nav-links-desktop" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>

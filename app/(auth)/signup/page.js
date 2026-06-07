@@ -50,9 +50,17 @@ export default function SignUp() {
       <div className="glass-alive auth-card" style={{ width: '100%', maxWidth: '460px', padding: '5rem 4rem', borderRadius: '2rem', background: 'white' }}>
         <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
-            <span style={{ color: '#9A0002', fontWeight: 900, fontSize: '1.25rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-              icolors@software
-            </span>
+            <img 
+              src="/logo.png" 
+              alt="iColors Logo" 
+              style={{ 
+                height: '42px', 
+                width: 'auto', 
+                mixBlendMode: 'multiply',
+                borderRadius: '10px',
+                filter: 'brightness(1.4) contrast(1.2)'
+              }} 
+            />
           </div>
           <h2 className="auth-title" style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#9A0002' }}>Join the Roster</h2>
           <div style={{ width: '40px', height: '3px', background: '#9A0002', margin: '1.5rem auto 0', opacity: 0.3 }}></div>
