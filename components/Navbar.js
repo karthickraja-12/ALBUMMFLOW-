@@ -49,13 +49,14 @@ export default function Navbar() {
           <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
             {isHome ? (
               <img 
-                src="/logo.jpeg" 
-                alt="AlbumFlow Logo" 
+                src="/logo.png" 
+                alt="iColors Logo" 
                 style={{ 
                   height: '42px', 
                   width: 'auto', 
-                  mixBlendMode: 'multiply', 
-                  filter: 'brightness(0) saturate(100%) invert(10%) sepia(97%) saturate(7460%) hue-rotate(358deg) brightness(95%) contrast(106%)' 
+                  mixBlendMode: 'multiply',
+                  borderRadius: '10px',
+                  filter: 'brightness(1.4) contrast(1.2)'
                 }} 
               />
             ) : (
