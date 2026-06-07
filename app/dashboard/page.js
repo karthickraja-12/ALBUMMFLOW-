@@ -49,15 +49,22 @@ export default function Dashboard() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    const res = await fetch('/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newEvent)
-    });
-    if (res.ok) {
-      setIsCreating(false);
-      setNewEvent({ name: '', max_selections: 9999 });
-      fetchData();
+    try {
+      const res = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEvent)
+      });
+      if (res.ok) {
+        setIsCreating(false);
+        setNewEvent({ name: '', max_selections: 9999 });
+        fetchData();
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "Failed to initialize collection.");
+      }
+    } catch (err) {
+      alert("An unexpected error occurred: " + err.message);
     }
   };
 
