@@ -116,7 +116,7 @@ export default function GalleryView({ params }) {
           <div className="animate-pop" style={{ marginBottom: '4.5rem' }}>
               {photographer?.image ? (
                 <div style={{ marginBottom: '2.5rem' }}>
-                   <img src={photographer.image} alt="Studio Logo" style={{ height: '180px', maxWidth: '360px', objectFit: 'contain', margin: '0 auto' }} />
+                    <img src={photographer.image} alt="Studio Logo" style={{ height: '90px', maxWidth: '280px', objectFit: 'contain', margin: '0 auto', mixBlendMode: 'multiply' }} />
                    {/* Studio Name added below logo per request */}
                    <div style={{ marginTop: '2rem', fontSize: '0.8rem', fontWeight: 900, color: '#9A0002', letterSpacing: '0.4em' }}>{photographer.company_name?.toUpperCase() || photographer.name?.toUpperCase()}</div>
                 </div>
@@ -164,14 +164,14 @@ export default function GalleryView({ params }) {
         @media (max-width: 768px) {
           .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important; gap: 1.5rem !important; padding: 0 1rem !important; }
           .hero-title { font-size: 2.75rem !important; }
-          .hero-logo-img { height: 180px !important; margin-bottom: 2rem !important; }
+          .hero-logo-img { height: 80px !important; margin-bottom: 2rem !important; }
           .nav-pill { margin: 1rem !important; padding: 1rem 1.5rem !important; top: 1rem !important; }
           .nav-logo-img { height: 28px !important; }
           .hero-section { min-height: 50vh !important; padding: 6rem 1.5rem 4rem !important; }
           .floating-controller { bottom: 0 !important; left: 0 !important; right: 0 !important; transform: none !important; width: 100% !important; min-width: 0 !important; padding: 1.5rem !important; flex-direction: column !important; gap: 1rem !important; border-radius: 0 !important; border-top: 1px solid rgba(154, 0, 2, 0.1) !important; }
           .counter-section { width: 100%; text-align: center; }
           .finalize-btn { width: 100%; padding: 1.25rem !important; }
-          .footer-logo-img { height: 120px !important; }
+          .footer-logo-img { height: 70px !important; }
         }
         .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 4rem; padding: 0 4rem; }
         .nav-pill { 
@@ -205,7 +205,7 @@ export default function GalleryView({ params }) {
           <div className="animate-pop" style={{ position: 'relative', zIndex: 1, maxWidth: '1000px' }}>
             {photographer?.image ? (
               <div style={{ marginBottom: '4rem' }}>
-                 <img src={photographer.image} className="hero-logo-img" alt="Studio Logo" style={{ height: '400px', maxWidth: '800px', objectFit: 'contain', margin: '0 auto' }} />
+                 <img src={photographer.image} className="hero-logo-img" alt="Studio Logo" style={{ height: '120px', maxWidth: '350px', objectFit: 'contain', margin: '0 auto', mixBlendMode: 'multiply' }} />
                  <div style={{ marginTop: '2rem', textTransform: 'uppercase', letterSpacing: '0.8em', fontSize: '1rem', fontWeight: 900, color: '#9A0002', opacity: 1 }}>{photographer?.company_name?.toUpperCase() || photographer?.name?.toUpperCase()}</div>
                  <div style={{ width: '80px', height: '1px', background: '#9A0002', margin: '2rem auto 0', opacity: 0.2 }}></div>
               </div>
@@ -300,7 +300,7 @@ export default function GalleryView({ params }) {
             <div style={{ color: '#9A0002', fontSize: '0.65rem', letterSpacing: '0.4em', fontWeight: 900 }}>SIGNATURE SYSTEM</div>
           </div>
          {photographer?.image ? (
-           <img src={photographer.image} className="footer-logo-img" alt="Studio Signature" style={{ height: '220px', maxWidth: '600px', objectFit: 'contain', margin: '0 auto' }} />
+            <img src={photographer.image} className="footer-logo-img" alt="Studio Signature" style={{ height: '100px', maxWidth: '300px', objectFit: 'contain', margin: '0 auto', mixBlendMode: 'multiply' }} />
          ) : (
            <h3 style={{ fontSize: '3.5rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#9A0002' }}>{photographer?.company_name || photographer?.name}</h3>
          )}
