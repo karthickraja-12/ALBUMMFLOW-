@@ -46,8 +46,23 @@ export default function Navbar() {
       <div className="container nav-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 0 }}>
         {/* Left Section: Logo & Desktop Links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <Link href="/" style={{ textDecoration: 'none', color: '#9A0002', fontWeight: 900, fontSize: '1rem', letterSpacing: '0.4em', flexShrink: 0 }}>
-            ALBUMFLOW
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
+            {isHome ? (
+              <img 
+                src="/logo.jpeg" 
+                alt="AlbumFlow Logo" 
+                style={{ 
+                  height: '42px', 
+                  width: 'auto', 
+                  mixBlendMode: 'multiply', 
+                  filter: 'brightness(0) saturate(100%) invert(10%) sepia(97%) saturate(7460%) hue-rotate(358deg) brightness(95%) contrast(106%)' 
+                }} 
+              />
+            ) : (
+              <span style={{ color: '#9A0002', fontWeight: 900, fontSize: '0.9rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                icolors@software
+              </span>
+            )}
           </Link>
           
           <div className="nav-links-desktop" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>

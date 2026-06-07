@@ -147,7 +147,12 @@ export default function GalleryView({ params }) {
             </form>
           </div>
 
-          <div style={{ marginTop: '5rem', fontSize: '0.65rem', letterSpacing: '0.6em', fontWeight: 900, color: '#9A0002', opacity: 0.4 }}>ALBUMFLOW PLATFORM</div>
+          <div style={{ marginTop: '5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', opacity: 0.4 }}>
+            <span style={{ color: '#9A0002', fontWeight: 900, fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              icolors@software
+            </span>
+            <div style={{ fontSize: '0.6rem', letterSpacing: '0.6em', fontWeight: 900, color: '#9A0002' }}>PLATFORM</div>
+          </div>
         </div>
       </div>
     );
@@ -179,8 +184,11 @@ export default function GalleryView({ params }) {
       `}</style>
 
       {/* Persistent Platform Branding Overlay */}
-      <div style={{ position: 'fixed', top: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 200, pointerEvents: 'none' }}>
-        <div style={{ fontSize: '0.65rem', letterSpacing: '0.6em', fontWeight: 900, color: '#9A0002', opacity: 0.3 }}>ALBUMFLOW ATELIER</div>
+      <div style={{ position: 'fixed', top: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 200, pointerEvents: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', opacity: 0.3 }}>
+        <span style={{ color: '#9A0002', fontWeight: 900, fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+          icolors@software
+        </span>
+        <div style={{ fontSize: '0.55rem', letterSpacing: '0.4em', fontWeight: 900, color: '#9A0002' }}>ATELIER</div>
       </div>
 
       {/* Editorial Studio Hero */}
@@ -215,9 +223,14 @@ export default function GalleryView({ params }) {
           </div>
       </section>
 
-      {/* Subdued Editorial Nav - Simplified to remove all logos and text */}
+      {/* Subdued Editorial Nav with permanent platform logo */}
       <header className="nav-pill animate-fade">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <span style={{ color: '#9A0002', fontWeight: 900, fontSize: '0.85rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              icolors@software
+            </span>
+          </Link>
           <span style={{ fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.4rem', color: '#9A0002', opacity: 0.5 }}>{event.name}</span>
         </div>
       </header>
@@ -280,8 +293,11 @@ export default function GalleryView({ params }) {
 
       {/* Signature Studio Footer */}
       <footer style={{ marginTop: '15rem', textAlign: 'center', padding: '10rem 2.5rem', borderTop: '1px solid rgba(154, 0, 2, 0.1)', position: 'relative', background: 'white' }}>
-         <div style={{ color: '#9A0002', fontSize: '0.75rem', letterSpacing: '0.4em', marginBottom: '4rem', fontWeight: 900, opacity: 0.4 }}>
-            ALBUMFLOW SIGNATURE SYSTEM
+         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '4rem', opacity: 0.4 }}>
+            <span style={{ color: '#9A0002', fontWeight: 900, fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              icolors@software
+            </span>
+            <div style={{ color: '#9A0002', fontSize: '0.65rem', letterSpacing: '0.4em', fontWeight: 900 }}>SIGNATURE SYSTEM</div>
           </div>
          {photographer?.image ? (
            <img src={photographer.image} className="footer-logo-img" alt="Studio Signature" style={{ height: '220px', maxWidth: '600px', objectFit: 'contain', margin: '0 auto' }} />

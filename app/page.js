@@ -95,7 +95,18 @@ export default function HomePage() {
       {/* Professional Footer */}
       <footer style={{ padding: '6rem 0', borderTop: '1px solid rgba(154, 0, 2, 0.1)', background: 'white' }}>
         <div className="container landing-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '2rem' }}>
-          <div style={{ fontSize: '1rem', letterSpacing: '0.4em', fontWeight: 900, color: '#9A0002' }}>ALBUMFLOW</div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <img 
+              src="/logo.jpeg" 
+              alt="AlbumFlow Logo" 
+              style={{ 
+                height: '48px', 
+                width: 'auto', 
+                mixBlendMode: 'multiply', 
+                filter: 'brightness(0) saturate(100%) invert(10%) sepia(97%) saturate(7460%) hue-rotate(358deg) brightness(95%) contrast(106%)' 
+              }} 
+            />
+          </div>
           <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(26, 26, 26, 0.4)', letterSpacing: '0.1em' }}>© 2026 THE ARCHIVAL ROSTER. ALL RIGHTS RESERVED.</p>
         </div>
       </footer>
