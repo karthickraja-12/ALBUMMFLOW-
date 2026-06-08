@@ -245,6 +245,8 @@ export default function GalleryView({ params }) {
               <div 
                 key={photo.id} 
                 onClick={() => toggleSelection(photo.id)}
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
                 className="animate-pop glass-alive"
                 style={{ 
                   position: 'relative', 
@@ -256,11 +258,12 @@ export default function GalleryView({ params }) {
                   animationDelay: `${index * 0.05}s`,
                   transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
                   boxShadow: iSelectedIt ? '0 30px 60px rgba(154, 0, 2, 0.2)' : '0 10px 30px rgba(0,0,0,0.03)',
-                  border: iSelectedIt ? '3px solid #9A0002' : '1px solid rgba(154, 0, 2, 0.05)'
+                  border: iSelectedIt ? '3px solid #9A0002' : '1px solid rgba(154, 0, 2, 0.05)',
+                  userSelect: 'none'
                 }}
               >
                 <img 
-                   src={photo.url} 
+                  src={photo.url} 
                   alt="Gallery Asset" 
                   style={{ 
                     width: '100%', 
@@ -268,9 +271,37 @@ export default function GalleryView({ params }) {
                     objectFit: 'cover', 
                     transition: 'transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
                     transform: iSelectedIt ? 'scale(1.05)' : 'scale(1)',
-                    opacity: iSelectedIt ? 1 : 0.9
+                    opacity: iSelectedIt ? 1 : 0.9,
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    WebkitUserDrag: 'none'
                   }} 
                 />
+                
+                {/* Horizontal Studio Watermark Overlay (50% Opacity) */}
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '90%',
+                  textAlign: 'center',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                  zIndex: 10,
+                  opacity: 0.5,
+                  color: 'white',
+                  textShadow: '0 2px 8px rgba(0, 0, 0, 0.75), 0 1px 2px rgba(0, 0, 0, 0.5)',
+                  fontSize: 'clamp(1rem, 4vw, 1.8rem)',
+                  fontWeight: 900,
+                  letterSpacing: '0.35em',
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {photographer?.company_name || photographer?.name || 'STUDIO'}
+                </div>
                 
                 {iSelectedIt && (
                   <div className="flex-center animate-pop" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', width: '48px', height: '48px', background: '#9A0002', color: 'white', borderRadius: '50%', boxShadow: '0 10px 20px rgba(154, 0, 2, 0.4)', zIndex: 20 }}>
