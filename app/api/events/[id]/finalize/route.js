@@ -4,24 +4,24 @@ import prisma from "@/lib/prisma";
 import { deleteObjects } from "@/lib/s3";
 
 export async function POST(request, { params }) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   try {
     const { id } = await params;
 
-    // 1. Verify Ownership
+    // 1. Fetch Event and verify it exists
     const event = await prisma.event.findUnique({
       where: { id },
-      select: { photographer_id: true, name: true }
+      select: { photographer_id: true, name: true, is_finalized: true }
     });
 
     if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
-    const isOwner = event.photographer_id === session.user.id;
-    const isAdmin = session.user.role === "super_admin";
-
-    if (!isOwner && !isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    
+    // If already finalized, succeed early
+    if (event.is_finalized) {
+      return NextResponse.json({ 
+        success: true, 
+        message: "Event is already finalized",
+        details: { totalPhotosParsed: 0, originalsDeleted: 0 }
+      });
     }
 
     // 2. Identify Photos to Cleanup (Originals that are unselected or already synced)
@@ -72,7 +72,7 @@ export async function POST(request, { params }) {
             data: { original_storage_path: null }
           }),
           prisma.user.update({
-            where: { id: session.user.id },
+            where: { id: event.photographer_id },
             data: {
               storage_used: { decrement: totalSizeToFree }
             }
