@@ -1,0 +1,22 @@
+{
+  "name": "albumflow-ai",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=packages/backend",
+    "dev:web": "npm run dev --workspace=packages/web",
+    "dev:desktop": "npm run dev --workspace=packages/desktop",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:all": "concurrently \"npm run dev:backend\" \"npm run dev:web\" \"npm run dev:desktop\"",
+    "build:backend": "npm run build --workspace=packages/backend",
+    "build:web": "npm run build --workspace=packages/web",
+    "build:desktop": "npm run build --workspace=packages/desktop",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
