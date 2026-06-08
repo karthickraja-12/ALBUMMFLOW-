@@ -1,0 +1,21 @@
+{
+  "name": "icolors AlbumFlow AI - Premium Photo Selection Workflow",
+  "short_name": "icolors AlbumFlow AI",
+  "description": "Premium Photo Selection Workflow Platform",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#EFE6DE",
+  "theme_color": "#9A0002",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
