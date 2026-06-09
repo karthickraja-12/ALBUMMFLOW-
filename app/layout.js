@@ -6,6 +6,9 @@ export const metadata = {
   title: 'icolors AlbumFlow AI - Premium Photo Selection Workflow',
   description: 'AI-powered wedding/event photo workflow platform for seamless client selection.',
   manifest: '/manifest.json',
+  icons: {
+    apple: '/logo-icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
